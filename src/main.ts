@@ -1,0 +1,82 @@
+/**
+ * main.ts
+ * ─────────────────────────────────────────────────────────────
+ * Entry point del juego.
+ * Inicializa Phaser 3 con la configuración base y arranca
+ * el PitchDetectorService en background (listo para v2).
+ * ─────────────────────────────────────────────────────────────
+ */
+
+import Phaser from 'phaser'
+import GameScene from './scenes/GameScene'
+import { PitchDetectorService } from './audio/pitchDetector'
+
+// ──────────────────────────────────────────
+// Configuración de Phaser
+// ──────────────────────────────────────────
+
+const config: Phaser.Types.Core.GameConfig = {
+  type: Phaser.AUTO,           // Usa WebGL si está disponible, fallback a Canvas
+  width: 800,
+  height: 560,
+  backgroundColor: '#050510',
+  parent: 'game-container',    // Monta el canvas dentro de este div del HTML
+  scene: [GameScene],
+
+  // Escala responsiva
+  scale: {
+    mode: Phaser.Scale.FIT,
+    autoCenter: Phaser.Scale.CENTER_BOTH,
+  },
+
+  // Sin gravedad — la manejamos manualmente en GameScene.update()
+  physics: {
+    default: 'arcade',
+    arcade: {
+      gravity: { x: 0, y: 0 },
+      debug: false
+    }
+  },
+
+  input: {
+  }
+}
+
+// ──────────────────────────────────────────
+// Iniciar el juego
+// ──────────────────────────────────────────
+
+const game = new Phaser.Game(config)
+console.log('🎸 Chord Strike arrancado —', game)
+
+// ──────────────────────────────────────────
+// Iniciar PitchDetector en background
+// ──────────────────────────────────────────
+// Por ahora solo logea las notas detectadas en consola.
+// En v2, este callback se conectará a GameScene para que
+// tocar la nota correcta en tu instrumento destruya el enemigo.
+
+const pitchDetector = new PitchDetectorService()
+
+// Intentar iniciar el micrófono después de 1 segundo
+// (esperar a que el juego esté listo y la página interactuada)
+window.addEventListener('click', async () => {
+  if (!pitchDetector.running) {
+    await pitchDetector.start((result) => {
+      // En v2: enviar evento a GameScene
+      // game.events.emit('noteDetected', result.note)
+
+      // Por ahora solo logeamos con info útil
+      console.log(
+        `🎵 Nota detectada: ${result.note} | ${result.frequency.toFixed(1)} Hz | claridad: ${(result.clarity * 100).toFixed(0)}%`
+      )
+    })
+  }
+}, { once: true })
+
+// ──────────────────────────────────────────
+// Limpiar al cerrar la página
+// ──────────────────────────────────────────
+window.addEventListener('beforeunload', () => {
+  pitchDetector.stop()
+})

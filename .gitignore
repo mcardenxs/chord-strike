@@ -1,0 +1,8 @@
+# Dependencias
+node_modules/
+
+# Directorios de compilación
+dist/
+
+# Archivos del sistema local (macOS)
+.DS_Store

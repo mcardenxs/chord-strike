@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>🎸 Chord Strike</title>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap');
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        background: #050510;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        min-height: 100vh;
+        font-family: 'Share Tech Mono', monospace;
+        overflow: hidden;
+      }
+
+      /* Fondo con grid estilo neon */
+      body::before {
+        content: '';
+        position: fixed;
+        inset: 0;
+        background-image:
+          linear-gradient(rgba(0, 255, 200, 0.03) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(0, 255, 200, 0.03) 1px, transparent 1px);
+        background-size: 40px 40px;
+        pointer-events: none;
+        z-index: 0;
+      }
+
+      #game-wrapper {
+        position: relative;
+        z-index: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 12px;
+      }
+
+      /* Header */
+      #header {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        width: 800px;
+        justify-content: space-between;
+      }
+
+      #title {
+        font-family: 'Orbitron', sans-serif;
+        font-weight: 900;
+        font-size: 22px;
+        color: #00ffc8;
+        text-shadow: 0 0 20px rgba(0, 255, 200, 0.8), 0 0 40px rgba(0, 255, 200, 0.4);
+        letter-spacing: 3px;
+        text-transform: uppercase;
+      }
+
+      #subtitle {
+        font-size: 11px;
+        color: rgba(0, 255, 200, 0.5);
+        letter-spacing: 2px;
+        text-transform: uppercase;
+      }
+
+      /* Canvas container con glow */
+      #game-container {
+        position: relative;
+        border: 1px solid rgba(0, 255, 200, 0.2);
+        box-shadow:
+          0 0 30px rgba(0, 255, 200, 0.15),
+          0 0 60px rgba(0, 255, 200, 0.08),
+          inset 0 0 30px rgba(0, 0, 0, 0.5);
+        border-radius: 4px;
+        overflow: hidden;
+      }
+
+      #game-container canvas {
+        display: block;
+      }
+
+      /* Scanlines overlay */
+      #game-container::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: repeating-linear-gradient(
+          0deg,
+          transparent,
+          transparent 2px,
+          rgba(0, 0, 0, 0.08) 2px,
+          rgba(0, 0, 0, 0.08) 4px
+        );
+        pointer-events: none;
+        z-index: 10;
+      }
+
+      /* Footer / instrucciones */
+      #footer {
+        display: flex;
+        gap: 32px;
+        width: 800px;
+        justify-content: center;
+      }
+
+      .hint {
+        font-size: 11px;
+        color: rgba(255, 255, 255, 0.3);
+        letter-spacing: 1px;
+        text-transform: uppercase;
+      }
+
+      .hint span {
+        color: rgba(0, 255, 200, 0.7);
+      }
+
+      /* Mic status badge */
+      #mic-status {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        padding: 6px 14px;
+        border: 1px solid rgba(0, 255, 200, 0.3);
+        border-radius: 20px;
+        font-size: 11px;
+        color: rgba(0, 255, 200, 0.6);
+        letter-spacing: 1px;
+        background: rgba(0, 255, 200, 0.05);
+        z-index: 100;
+        transition: all 0.3s;
+      }
+
+      #mic-status.active {
+        border-color: rgba(0, 255, 200, 0.8);
+        color: #00ffc8;
+        box-shadow: 0 0 10px rgba(0, 255, 200, 0.3);
+      }
+
+      #mic-status .dot {
+        display: inline-block;
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: currentColor;
+        margin-right: 6px;
+        animation: pulse 1.5s infinite;
+      }
+
+      @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.3; }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="game-wrapper">
+      <div id="header">
+        <div>
+          <div id="title">🎸 Chord Strike</div>
+          <div id="subtitle">Destroy the notes — feel the beat</div>
+        </div>
+      </div>
+
+      <div id="game-container">
+        <!-- Phaser monta el canvas aquí -->
+      </div>
+
+      <div id="footer">
+        <div class="hint"><span>CLICK</span> sobre las notas para destruirlas</div>
+        <div class="hint">Las notas caen — no dejes que lleguen abajo</div>
+        <div class="hint"><span>MIC</span> integrado — próximamente tocar = disparar</div>
+      </div>
+    </div>
+
+    <div id="mic-status">
+      <span class="dot"></span>MIC STANDBY
+    </div>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

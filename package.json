@@ -1,0 +1,18 @@
+{
+  "name": "chord-strike",
+  "version": "1.0.0",
+  "description": "Chord Strike - Juego de notas musicales",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "phaser": "^3.87.0",
+    "pitchy": "^4.1.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.5",
+    "vite": "^5.2.11"
+  }
+}
