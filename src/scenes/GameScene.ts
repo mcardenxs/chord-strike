@@ -622,6 +622,33 @@ export default class GameScene extends Phaser.Scene {
 
   /** Maneja el evento de nota detectada por el micrófono */
   private handleNoteDetected(detectedNote: string): void {
-    console.log(`🔊 GameScene recibió la nota detectada: ${detectedNote}`)
+    if (this.isGameOver) return
+
+    // Obtener la nota base detectada (ej: "C4" -> "C", "F#3" -> "F#")
+    const detectedBase = detectedNote.slice(0, -1)
+
+    // Buscar todas las notas en pantalla que coincidan con la nota base
+    const matchingNotes: Phaser.GameObjects.Container[] = []
+
+    this.notesGroup.getChildren().forEach((obj) => {
+      const note = obj as Phaser.GameObjects.Container
+      const noteName = note.getData('name') as string // Ej: "C4"
+      const noteBase = noteName.slice(0, -1) // Ej: "C"
+
+      if (noteBase === detectedBase) {
+        matchingNotes.push(note)
+      }
+    })
+
+    // Si hay notas que coinciden, destruir la que esté más abajo (mayor coordenada y)
+    if (matchingNotes.length > 0) {
+      // Ordenar por coordenada y de mayor a menor (las más bajas primero)
+      matchingNotes.sort((a, b) => b.y - a.y)
+      const lowestNote = matchingNotes[0]
+      
+      // Destruir la nota
+      this.destroyNote(lowestNote)
+      console.log(`🎯 Nota ${lowestNote.getData('name')} destruida por tono de micrófono!`)
+    }
   }
 }
