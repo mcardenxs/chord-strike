@@ -1,81 +1,71 @@
 # 🎸 Chord Strike
 
-Un juego web 2D tipo "music shmup" donde notas musicales caen desde arriba y tú las destruyes.  
-Construido con **Phaser 3 + TypeScript + Vite + Pitchy**.
+Un juego interactivo de entrenamiento auditivo y musical en 2D donde las notas y acordes caen desde la parte superior y tú debes destruirlos cantando o tocando las notas correspondientes a través de tu micrófono (o mediante clicks del ratón).
+
+Construido con **Phaser 3 + TypeScript + Vite + Pitchy (algoritmo MPM)**.
 
 ---
 
-## 🚀 Instalación y ejecución
+## 🚀 Instalación y Ejecución
 
 ```bash
-# 1. Entra al directorio
+# 1. Clona e ingresa al directorio
 cd chord-strike
 
-# 2. Instala dependencias
+# 2. Instala las dependencias
 npm install
 
 # 3. Arranca el servidor de desarrollo
 npm run dev
 ```
 
-Abre tu navegador en `http://localhost:3000`
+El juego estará disponible en tu navegador en: `http://localhost:3000` (o el puerto que indique Vite).
 
 ---
 
-## 🎮 Cómo jugar (v1)
+## 🎮 Características del Juego
 
-- Las notas musicales (C4, A3, E2...) caen desde arriba
-- **Haz click** sobre ellas para destruirlas y sumar puntos
-- Si una nota llega a la línea roja de abajo, **pierdes una vida** ♦
-- Con 5 hits consecutivos, el multiplicador de puntos sube
-- El juego termina cuando pierdes las 5 vidas
+### 🎨 Estética Minimalista y Calma
+* **Paleta Zen**: Colores pastel suaves e integrados que sustituyen el estilo cyberpunk original por una apariencia de estudio tranquila y relajante.
+* **Fondo de Pentagrama**: El área de juego cuenta con un fondo sutil que simula las 5 líneas de un pentagrama clásico.
+* **Indicadores Limpios**: Barra superior con puntaje formateado en ceros, indicador de escudo mediante círculos rellenos (`●` y `○`), y una línea de peligro inferior marcada elegantemente como `— LÍMITE —`.
+
+### ⏱️ Control de Tempo (BPM) y Metrónomo
+* **Ajuste en Vivo**: Control deslizante (slider) de **10 a 250 BPM** que actualiza la velocidad de caída y frecuencia de aparición de los elementos según el tempo.
+* **Metrónomo Procedimental**: Un botón de bocina (`🔇`/`🔊`) permite escuchar un click limpio sintetizado en tiempo real usando **Web Audio API** (sin necesidad de cargar archivos de sonido externos), perfectamente sincronizado con el tempo y aparición de notas.
+
+### 🎵 Mecánica de Acordes y Arpegiado (Micrófono)
+* **Spawn Híbrido**: Hay un **70%** de probabilidad de spawnear notas individuales y un **30%** de spawnear acordes diatónicos de Do Mayor (`C`, `Dm`, `Em`, `F`, `G`, `Am`).
+* **Burbujas de Acordes**: Son más grandes y se representan visualmente con un doble borde elegante que muestra el nombre del acorde (ej: `Am`) y sus notas en la base (`A  C  E`).
+* **Detección de Pitch Inteligente**:
+  * Al cantar o tocar una nota (ej: `C`), la entrada del micrófono se valida contra las notas simples (destruyendo la que esté más abajo).
+  * Si no hay notas simples que coincidan, se registra la nota en la burbuja de acorde activa más baja que la requiera.
+  * La burbuja de acorde mostrará el progreso envolviendo las notas tocadas en corchetes (ej: `A  [C]  E`) y emitiendo un pulso visual de confirmación.
+  * Al completar todas las notas del acorde (arpegio completo), este explota liberando partículas y otorgando una alta puntuación.
+* **Soporte de Entrada Alternativa**: Puedes hacer click sobre cualquier nota o acorde con el cursor para destruirlo manualmente.
 
 ---
 
-## 🎤 Detección de tono (lista para v2)
-
-El micrófono ya está integrado. Cuando hagas click por primera vez, el navegador te pedirá permiso.
-
-Abre la consola del navegador (F12) para ver las notas detectadas en tiempo real:
-```
-🎵 Nota detectada: A4 | 440.0 Hz | claridad: 97%
-```
-
-En la **v2**, tocar la nota correcta en tu guitarra/bajo/piano **disparará automáticamente** contra la nota en pantalla.
-
----
-
-## 📁 Estructura del proyecto
+## 📁 Estructura del Proyecto
 
 ```
 /src
   /scenes
-    GameScene.ts     ← Lógica del juego (spawn, physics, UI, game over)
+    GameScene.ts     ← Lógica principal del juego (control de BPM, spawn, UI y colisiones)
   /audio
-    pitchDetector.ts ← Captura de micrófono + detección de pitch con Pitchy
-  main.ts            ← Entry point: configura Phaser + inicia PitchDetector
-index.html           ← HTML base con estilos neon
-vite.config.ts       ← Config de Vite
-tsconfig.json        ← Config de TypeScript
+    pitchDetector.ts ← Captura de micrófono y detección de tono con Pitchy (MPM)
+  main.ts            ← Entrada de la app, vinculación del detector con Phaser y eventos DOM
+index.html           ← Interfaz de usuario (BPM slider, metrónomo, área del juego y fuentes)
+vite.config.ts       ← Configuración del empaquetador Vite
+tsconfig.json        ← Configuración de TypeScript
 ```
 
 ---
 
-## 🗺️ Roadmap
+## 🛠️ Stack Técnico
 
-| Versión | Feature |
-|---------|---------|
-| ✅ v1   | Spawn de notas, click para destruir, score, HP, combo |
-| 🔜 v2   | Conectar pitch detector → tocar nota = destruir enemigo |
-| 🔜 v3   | Modos por instrumento (guitarra, bajo, piano) |
-| 🔜 v4   | Niveles, jefes, power-ups musicales |
-
----
-
-## 🛠️ Stack técnico
-
-- **Phaser 3** — Motor de juegos 2D para web
-- **TypeScript** — Tipado estático
-- **Vite** — Bundler ultrarrápido
-- **Pitchy** — Detección de pitch en tiempo real (algoritmo MPM)
-- **Web Audio API** — Captura de micrófono nativa del navegador
+* **Phaser 3** — Motor de juegos 2D.
+* **Pitchy** — Detección precisa de pitch en tiempo real mediante el algoritmo McLeod Pitch Method (MPM).
+* **Web Audio API** — Captura de flujo de micrófono y síntesis de osciladores procedurales para el metrónomo.
+* **TypeScript & Vite** — Flujo de desarrollo rápido y estructurado.
+* **Google Fonts (Outfit)** — Tipografía moderna y minimalista.
