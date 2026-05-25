@@ -56,6 +56,8 @@ export default class GameScene extends Phaser.Scene {
   private isGameOver: boolean = false
   private combo: number = 0           // Hits consecutivos
   private spawnTimer: number = 0      // Acumulador de tiempo para spawn
+  private bpm: number = 60            // Ritmo de Beats Per Minute
+  private spawnIntervalMs: number = 1000 // Frecuencia de aparición de notas
 
   // — Grupos de objetos —
   private notesGroup!: Phaser.GameObjects.Group
@@ -91,6 +93,11 @@ export default class GameScene extends Phaser.Scene {
     this.combo = 0
     this.spawnTimer = 0
 
+    // Leer el valor inicial del slider del DOM para el BPM
+    const bpmSlider = document.getElementById('bpm-slider') as HTMLInputElement
+    this.bpm = bpmSlider ? parseInt(bpmSlider.value, 10) : 60
+    this.spawnIntervalMs = 60000 / this.bpm
+
     // ── Fondo con gradiente (Graphics) ──
     this.createBackground(width, height)
 
@@ -116,9 +123,13 @@ export default class GameScene extends Phaser.Scene {
     // ── Escuchar evento de tono detectado (micrófono) ──
     this.game.events.on('note-detected', this.handleNoteDetected, this)
 
+    // ── Escuchar cambios de BPM ──
+    this.game.events.on('bpm-changed', this.handleBpmChanged, this)
+
     // Apagar la escucha al reiniciar o cerrar la escena para evitar duplicación
     this.events.once('shutdown', () => {
       this.game.events.off('note-detected', this.handleNoteDetected, this)
+      this.game.events.off('bpm-changed', this.handleBpmChanged, this)
     })
 
     console.log('🎮 GameScene lista — ¡a destruir notas!')
@@ -132,7 +143,7 @@ export default class GameScene extends Phaser.Scene {
 
     // — Spawn de notas por timer manual —
     this.spawnTimer += delta
-    if (this.spawnTimer >= SPAWN_INTERVAL_MS) {
+    if (this.spawnTimer >= this.spawnIntervalMs) {
       this.spawnTimer = 0
       this.spawnNote()
     }
@@ -258,8 +269,9 @@ export default class GameScene extends Phaser.Scene {
     const x = Phaser.Math.Between(margin, width - margin)
     const y = -NOTE_RADIUS - 10  // Empieza fuera de pantalla
 
-    // Velocidad aleatoria
-    const speed = Phaser.Math.FloatBetween(NOTE_FALL_SPEED_MIN, NOTE_FALL_SPEED_MAX)
+    // Velocidad aleatoria escalada por el BPM
+    const speedMultiplier = this.bpm / 60
+    const speed = Phaser.Math.FloatBetween(NOTE_FALL_SPEED_MIN, NOTE_FALL_SPEED_MAX) * speedMultiplier
 
     // — Gráfico del círculo —
     const circle = this.add.graphics()
@@ -636,5 +648,12 @@ export default class GameScene extends Phaser.Scene {
       this.destroyNote(lowestNote)
       console.log(`🎯 Nota ${lowestNote.getData('name')} destruida por tono de micrófono!`)
     }
+  }
+
+  /** Maneja el cambio de BPM desde la interfaz */
+  private handleBpmChanged(newBpm: number): void {
+    this.bpm = newBpm
+    this.spawnIntervalMs = 60000 / newBpm
+    console.log(`⏱️ Tempo actualizado en juego: ${newBpm} BPM | Intervalo: ${this.spawnIntervalMs.toFixed(0)}ms`)
   }
 }
