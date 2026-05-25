@@ -50,6 +50,21 @@ const game = new Phaser.Game(config)
 console.log('🎸 Chord Strike arrancado —', game)
 
 // ──────────────────────────────────────────
+// Sincronizar slider de BPM con Phaser
+// ──────────────────────────────────────────
+const bpmSlider = document.getElementById('bpm-slider') as HTMLInputElement
+const bpmValue = document.getElementById('bpm-value')
+
+if (bpmSlider && bpmValue) {
+  bpmSlider.addEventListener('input', (e) => {
+    const val = (e.target as HTMLInputElement).value
+    bpmValue.textContent = val
+    // Emitir cambio de BPM a las escenas de Phaser
+    game.events.emit('bpm-changed', parseInt(val, 10))
+  })
+}
+
+// ──────────────────────────────────────────
 // Iniciar PitchDetector en background
 // ──────────────────────────────────────────
 // Por ahora solo logea las notas detectadas en consola.
