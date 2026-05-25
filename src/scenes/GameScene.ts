@@ -37,9 +37,28 @@ const NOTE_TYPES: NoteData[] = [
   { name: 'B',  color: 0xdca6b5, glow: '#b57a8b', points: 160 }, // Rosa Palo
 ]
 
+/** Datos de un acorde en el juego */
+interface ChordData {
+  name: string;        // Nombre del acorde (ej: "Am")
+  notes: string[];     // Notas que componen el acorde (ej: ['A', 'C', 'E'])
+  color: number;       // Color hex para el gráfico
+  glow: string;        // Color CSS para texto/detalles
+  points: number;      // Puntos al completarlo
+}
+
+/** Tipos de acordes diatónicos en la escala de Do Mayor */
+const CHORD_TYPES: ChordData[] = [
+  { name: 'C',   notes: ['C', 'E', 'G'], color: 0x8fa89b, glow: '#5c7566', points: 300 }, // Do Mayor
+  { name: 'Dm',  notes: ['D', 'F', 'A'], color: 0xd69f96, glow: '#b57970', points: 350 }, // Re Menor
+  { name: 'Em',  notes: ['E', 'G', 'B'], color: 0xe3c18f, glow: '#b89663', points: 320 }, // Mi Menor
+  { name: 'F',   notes: ['F', 'A', 'C'], color: 0xb5a3c4, glow: '#8c779c', points: 340 }, // Fa Mayor
+  { name: 'G',   notes: ['G', 'B', 'D'], color: 0x9cb0c2, glow: '#708699', points: 310 }, // Sol Mayor
+  { name: 'Am',  notes: ['A', 'C', 'E'], color: 0xe0ad8a, glow: '#b8815a', points: 330 }, // La Menor
+]
+
 const OCTAVES = [2, 3, 4, 5]        // Octavas posibles (ej: C4, A3)
 const NOTE_RADIUS = 28               // Radio del círculo base
-const SPAWN_INTERVAL_MS = 1200       // Cada cuánto aparece una nota (ms)
+const CHORD_RADIUS = 35              // Radio de la burbuja del acorde
 const NOTE_FALL_SPEED_MIN = 60       // px/segundo mínimo
 const NOTE_FALL_SPEED_MAX = 140      // px/segundo máximo
 const MAX_HP = 5                     // Vidas del jugador
@@ -205,7 +224,7 @@ export default class GameScene extends Phaser.Scene {
       fontFamily: "'Outfit', sans-serif",
       fontSize: '10px',
       color: 'rgba(181, 121, 112, 0.5)',
-      letterSpacing: 2
+  letterSpacing: 2
     }).setOrigin(0.5)
   }
 
@@ -264,19 +283,12 @@ export default class GameScene extends Phaser.Scene {
     return '●'.repeat(this.hp) + '○'.repeat(MAX_HP - this.hp)
   }
 
-  /** Crea una nota musical en una posición aleatoria X */
+  /** Crea una nota musical o un acorde en una posición aleatoria X */
   private spawnNote(): void {
     const { width } = this.scale
-    const margin = NOTE_RADIUS + 10
 
-    // Elegir tipo de nota al azar
-    const type = NOTE_TYPES[Phaser.Math.Between(0, NOTE_TYPES.length - 1)]
-    const octave = OCTAVES[Phaser.Math.Between(0, OCTAVES.length - 1)]
-    const fullName = `${type.name}${octave}`
-
-    // Posición X aleatoria dentro del campo
-    const x = Phaser.Math.Between(margin, width - margin)
-    const y = -NOTE_RADIUS - 10  // Empieza fuera de pantalla
+    // Decidir si se genera una nota simple (70%) o un acorde (30%)
+    const spawnChord = Phaser.Math.Between(1, 100) <= 30
 
     // Velocidad aleatoria escalada por el BPM
     const speedMultiplier = this.bpm / 60
@@ -287,44 +299,108 @@ export default class GameScene extends Phaser.Scene {
       this.playMetronomeClick()
     }
 
-    // — Gráfico del círculo —
+    let container: Phaser.GameObjects.Container
     const circle = this.add.graphics()
 
-    // Círculo principal relleno translúcido suave
-    circle.fillStyle(type.color, 0.25)
-    circle.fillCircle(0, 0, NOTE_RADIUS)
+    if (spawnChord) {
+      // ──────────────────────────────────────────
+      // SPAWN DE ACORDE (C, Dm, Em, F, G, Am)
+      // ──────────────────────────────────────────
+      const chord = CHORD_TYPES[Phaser.Math.Between(0, CHORD_TYPES.length - 1)]
+      const margin = CHORD_RADIUS + 10
+      const x = Phaser.Math.Between(margin, width - margin)
+      const y = -CHORD_RADIUS - 10
 
-    // Borde elegante
-    circle.lineStyle(1.5, type.color, 0.8)
-    circle.strokeCircle(0, 0, NOTE_RADIUS)
+      // Círculo principal relleno translúcido suave
+      circle.fillStyle(chord.color, 0.25)
+      circle.fillCircle(0, 0, CHORD_RADIUS)
 
-    // — Texto de la nota —
-    const label = this.add.text(0, -3, fullName, {
-      fontFamily: "'Outfit', sans-serif",
-      fontSize: '13px',
-      fontStyle: '600',
-      color: '#4a4744',
-      align: 'center',
-    }).setOrigin(0.5)
+      // Doble borde elegante (estética musical para acordes)
+      circle.lineStyle(1.5, chord.color, 0.8)
+      circle.strokeCircle(0, 0, CHORD_RADIUS)
+      circle.lineStyle(1, chord.color, 0.4)
+      circle.strokeCircle(0, 0, CHORD_RADIUS - 4)
 
-    // — Nota musical Unicode decorativa —
-    const symbol = this.add.text(0, 11, '♩', {
-      fontFamily: "'Outfit', sans-serif",
-      fontSize: '11px',
-      color: '#706c68',
-    }).setOrigin(0.5).setAlpha(0.35)
+      // Texto del nombre del acorde (ej: "Am")
+      const label = this.add.text(0, -9, chord.name, {
+        fontFamily: "'Outfit', sans-serif",
+        fontSize: '14px',
+        fontStyle: '700',
+        color: '#4a4744',
+        align: 'center',
+      }).setOrigin(0.5)
 
-    // — Agrupar todo en un Container —
-    const container = this.add.container(x, y, [circle, label, symbol])
-    container.setSize(NOTE_RADIUS * 2, NOTE_RADIUS * 2)
-    container.setInteractive()  // Hace el container clickeable
+      // Lista de notas requeridas (ej: "A  C  E")
+      const notesLabel = this.add.text(0, 10, chord.notes.join('  '), {
+        fontFamily: "'Outfit', sans-serif",
+        fontSize: '10px',
+        fontStyle: '600',
+        color: '#706c68',
+        align: 'center',
+      }).setOrigin(0.5)
 
-    // Guardar datos en el container
-    container.setData('speed', speed)
-    container.setData('type', type)
-    container.setData('name', fullName)
+      // Agrupar en contenedor
+      container = this.add.container(x, y, [circle, label, notesLabel])
+      container.setSize(CHORD_RADIUS * 2, CHORD_RADIUS * 2)
+      container.setInteractive()
 
-    // Click directo en el container
+      // Guardar datos
+      container.setData('speed', speed)
+      container.setData('noteType', 'chord')
+      container.setData('chordData', chord)
+      container.setData('name', chord.name)
+      container.setData('notes', [...chord.notes])
+      container.setData('playedNotes', [])
+      container.setData('notesTextObject', notesLabel)
+
+    } else {
+      // ──────────────────────────────────────────
+      // SPAWN DE NOTA SIMPLE (C4, E3, etc.)
+      // ──────────────────────────────────────────
+      const type = NOTE_TYPES[Phaser.Math.Between(0, NOTE_TYPES.length - 1)]
+      const octave = OCTAVES[Phaser.Math.Between(0, OCTAVES.length - 1)]
+      const fullName = `${type.name}${octave}`
+      const margin = NOTE_RADIUS + 10
+      const x = Phaser.Math.Between(margin, width - margin)
+      const y = -NOTE_RADIUS - 10
+
+      // Círculo principal relleno translúcido suave
+      circle.fillStyle(type.color, 0.25)
+      circle.fillCircle(0, 0, NOTE_RADIUS)
+
+      // Borde elegante
+      circle.lineStyle(1.5, type.color, 0.8)
+      circle.strokeCircle(0, 0, NOTE_RADIUS)
+
+      // Texto de la nota
+      const label = this.add.text(0, -3, fullName, {
+        fontFamily: "'Outfit', sans-serif",
+        fontSize: '13px',
+        fontStyle: '600',
+        color: '#4a4744',
+        align: 'center',
+      }).setOrigin(0.5)
+
+      // Nota musical Unicode decorativa
+      const symbol = this.add.text(0, 11, '♩', {
+        fontFamily: "'Outfit', sans-serif",
+        fontSize: '11px',
+        color: '#706c68',
+      }).setOrigin(0.5).setAlpha(0.35)
+
+      // Agrupar en contenedor
+      container = this.add.container(x, y, [circle, label, symbol])
+      container.setSize(NOTE_RADIUS * 2, NOTE_RADIUS * 2)
+      container.setInteractive()
+
+      // Guardar datos
+      container.setData('speed', speed)
+      container.setData('noteType', 'single')
+      container.setData('type', type)
+      container.setData('name', fullName)
+    }
+
+    // Click directo en el container para destruir (soporte manual)
     container.on('pointerdown', () => {
       this.destroyNote(container)
     })
@@ -341,7 +417,7 @@ export default class GameScene extends Phaser.Scene {
     // Pulso continuo (scale leve) para hacer la nota "viva"
     this.tweens.add({
       targets: container,
-      scale: { from: 1, to: 1.05 },
+      scale: { from: 1, to: 1.04 },
       duration: 600,
       yoyo: true,
       repeat: -1,
@@ -370,19 +446,34 @@ export default class GameScene extends Phaser.Scene {
     })
   }
 
-  /** Destruye una nota con efectos */
+  /** Destruye una nota o acorde con efectos */
   private destroyNote(note: Phaser.GameObjects.Container): void {
     if (!note.active) return
 
-    const type = note.getData('type') as NoteData
+    const noteType = note.getData('noteType') as string
+    let color: number
+    let points: number
+    let glow: string
+
+    if (noteType === 'chord') {
+      const chord = note.getData('chordData') as ChordData
+      color = chord.color
+      points = chord.points
+      glow = chord.glow
+    } else {
+      const type = note.getData('type') as NoteData
+      color = type.color
+      points = type.points
+      glow = type.glow
+    }
 
     // — Explosión de partículas —
-    this.explodeNote(note.x, note.y, type.color)
+    this.explodeNote(note.x, note.y, color)
 
     // — Flash de texto "+POINTS" —
     this.combo++
     const multiplier = Math.min(Math.floor(this.combo / 3) + 1, 5)
-    const earned = type.points * multiplier
+    const earned = points * multiplier
 
     this.score += earned
     this.updateScoreDisplay()
@@ -392,7 +483,7 @@ export default class GameScene extends Phaser.Scene {
       fontFamily: "'Outfit', sans-serif",
       fontSize: multiplier > 1 ? '18px' : '13px',
       fontStyle: '600',
-      color: multiplier > 1 ? '#b89663' : type.glow,
+      color: multiplier > 1 ? '#b89663' : glow,
     }).setOrigin(0.5)
 
     this.tweens.add({
@@ -637,30 +728,92 @@ export default class GameScene extends Phaser.Scene {
     if (this.isGameOver) return
 
     // Obtener la nota base detectada (ej: "C4" -> "C", "F#3" -> "F#")
-    const detectedBase = detectedNote.slice(0, -1)
+    const match = detectedNote.match(/^[A-G]#?/)
+    if (!match) return
+    const detectedBase = match[0]
 
-    // Buscar todas las notas en pantalla que coincidan con la nota base
-    const matchingNotes: Phaser.GameObjects.Container[] = []
+    // Buscar notas simples que coincidan y acordes activos
+    const matchingSingleNotes: Phaser.GameObjects.Container[] = []
+    const activeChords: Phaser.GameObjects.Container[] = []
 
     this.notesGroup.getChildren().forEach((obj) => {
       const note = obj as Phaser.GameObjects.Container
-      const noteName = note.getData('name') as string // Ej: "C4"
-      const noteBase = noteName.slice(0, -1) // Ej: "C"
+      const noteType = note.getData('noteType') as string
 
-      if (noteBase === detectedBase) {
-        matchingNotes.push(note)
+      if (noteType === 'single') {
+        const noteName = note.getData('name') as string // Ej: "C4"
+        const matchName = noteName.match(/^[A-G]#?/)
+        const noteBase = matchName ? matchName[0] : ''
+        if (noteBase === detectedBase) {
+          matchingSingleNotes.push(note)
+        }
+      } else if (noteType === 'chord') {
+        activeChords.push(note)
       }
     })
 
-    // Si hay notas que coinciden, destruir la que esté más abajo (mayor coordenada y)
-    if (matchingNotes.length > 0) {
+    // 1. Primero intentar destruir una nota simple que coincida (priorizando la más baja)
+    if (matchingSingleNotes.length > 0) {
       // Ordenar por coordenada y de mayor a menor (las más bajas primero)
-      matchingNotes.sort((a, b) => b.y - a.y)
-      const lowestNote = matchingNotes[0]
+      matchingSingleNotes.sort((a, b) => b.y - a.y)
+      const lowestNote = matchingSingleNotes[0]
       
-      // Destruir la nota
       this.destroyNote(lowestNote)
-      console.log(`🎯 Nota ${lowestNote.getData('name')} destruida por tono de micrófono!`)
+      console.log(`🎯 Nota simple ${lowestNote.getData('name')} destruida por tono de micrófono!`)
+      return
+    }
+
+    // 2. Si no hay nota simple que coincida, buscar el acorde activo más bajo que requiera esa nota y no la haya registrado
+    const matchingChords: Phaser.GameObjects.Container[] = []
+    activeChords.forEach((chordContainer) => {
+      const notes = chordContainer.getData('notes') as string[]
+      const playedNotes = chordContainer.getData('playedNotes') as string[]
+      
+      if (notes.includes(detectedBase) && !playedNotes.includes(detectedBase)) {
+        matchingChords.push(chordContainer)
+      }
+    })
+
+    if (matchingChords.length > 0) {
+      // Ordenar por coordenada y de mayor a menor (las más bajas primero)
+      matchingChords.sort((a, b) => b.y - a.y)
+      const lowestChord = matchingChords[0]
+
+      const notes = lowestChord.getData('notes') as string[]
+      const playedNotes = lowestChord.getData('playedNotes') as string[]
+      
+      // Registrar la nota
+      playedNotes.push(detectedBase)
+      lowestChord.setData('playedNotes', playedNotes)
+
+      // Actualizar visualmente la etiqueta de notas (ej: A [C] E)
+      const notesTextObject = lowestChord.getData('notesTextObject') as Phaser.GameObjects.Text
+      if (notesTextObject) {
+        const formatted = notes.map(noteName => {
+          if (playedNotes.includes(noteName)) {
+            return `[${noteName}]`
+          }
+          return noteName
+        }).join('  ')
+        notesTextObject.setText(formatted)
+      }
+
+      // Feedback visual: pequeño pulso de escala al acertar una nota
+      this.tweens.add({
+        targets: lowestChord,
+        scale: 1.15,
+        duration: 100,
+        yoyo: true,
+        ease: 'Quad.easeInOut'
+      })
+
+      console.log(`🎵 Nota '${detectedBase}' registrada en acorde '${lowestChord.getData('name')}'!`)
+
+      // Si se completaron todas las notas, destruir el acorde
+      if (playedNotes.length === notes.length) {
+        this.destroyNote(lowestChord)
+        console.log(`🎯 Acorde ${lowestChord.getData('name')} completado y destruido!`)
+      }
     }
   }
 
