@@ -28,13 +28,13 @@ interface NoteData {
 
 /** Paleta de notas disponibles con sus propiedades visuales */
 const NOTE_TYPES: NoteData[] = [
-  { name: 'C',  color: 0x00ffc8, glow: '#00ffc8', points: 100 },
-  { name: 'D',  color: 0xff6b6b, glow: '#ff6b6b', points: 150 },
-  { name: 'E',  color: 0xffe66d, glow: '#ffe66d', points: 120 },
-  { name: 'F',  color: 0xa78bfa, glow: '#a78bfa', points: 130 },
-  { name: 'G',  color: 0x38bdf8, glow: '#38bdf8', points: 110 },
-  { name: 'A',  color: 0xfb923c, glow: '#fb923c', points: 140 },
-  { name: 'B',  color: 0xf472b6, glow: '#f472b6', points: 160 },
+  { name: 'C',  color: 0x8fa89b, glow: '#5c7566', points: 100 }, // Verde Sabia
+  { name: 'D',  color: 0xd69f96, glow: '#b57970', points: 150 }, // Terracota
+  { name: 'E',  color: 0xe3c18f, glow: '#b89663', points: 120 }, // Ochre
+  { name: 'F',  color: 0xb5a3c4, glow: '#8c779c', points: 130 }, // Lavanda
+  { name: 'G',  color: 0x9cb0c2, glow: '#708699', points: 110 }, // Azul Pizarra
+  { name: 'A',  color: 0xe0ad8a, glow: '#b8815a', points: 140 }, // Melocotón
+  { name: 'B',  color: 0xdca6b5, glow: '#b57a8b', points: 160 }, // Rosa Palo
 ]
 
 const OCTAVES = [2, 3, 4, 5]        // Octavas posibles (ej: C4, A3)
@@ -156,38 +156,36 @@ export default class GameScene extends Phaser.Scene {
   // MÉTODOS PRIVADOS
   // ─────────────────────────────────────────
 
-  /** Fondo oscuro con grid sutil */
+  /** Fondo crema con pentagrama musical muy sutil */
   private createBackground(w: number, h: number): void {
     const bg = this.add.graphics()
-    bg.fillGradientStyle(0x050510, 0x050510, 0x0a0a25, 0x0a0a25, 1)
+    bg.fillStyle(0xf9f7f5, 1) // Fondo crema claro sólido
     bg.fillRect(0, 0, w, h)
 
-    // Grid lines sutiles
-    const grid = this.add.graphics()
-    grid.lineStyle(1, 0x00ffc8, 0.04)
-    for (let x = 0; x < w; x += 40) {
-      grid.lineBetween(x, 0, x, h)
-    }
-    for (let y = 0; y < h; y += 40) {
-      grid.lineBetween(0, y, w, y)
+    // Pentagrama musical muy tenue en el centro de la pantalla
+    const staff = this.add.graphics()
+    staff.lineStyle(1, 0xebe8e4, 1)
+    const startY = h / 2 - 40
+    for (let i = 0; i < 5; i++) {
+      staff.lineBetween(40, startY + i * 20, w - 40, startY + i * 20)
     }
   }
 
-  /** Línea roja de peligro en la parte inferior */
+  /** Línea de peligro sutil en la parte inferior */
   private createDangerLine(w: number, h: number): void {
     const dangerY = h - 50
     const line = this.add.graphics()
 
-    // Línea principal roja translúcida
-    line.lineStyle(2, 0xff3366, 0.5)
-    line.lineBetween(0, dangerY, w, dangerY)
+    // Línea delgada color arcilla suave
+    line.lineStyle(1, 0xd69f96, 0.4)
+    line.lineBetween(40, dangerY, w - 40, dangerY)
 
-    // Texto "DANGER ZONE"
-    this.add.text(w / 2, dangerY - 14, '— DANGER ZONE —', {
-      fontFamily: "'Share Tech Mono', monospace",
-      fontSize: '11px',
-      color: 'rgba(255, 51, 102, 0.4)',
-      letterSpacing: 3
+    // Texto "LÍMITE"
+    this.add.text(w / 2, dangerY - 14, '— LÍMITE —', {
+      fontFamily: "'Outfit', sans-serif",
+      fontSize: '10px',
+      color: 'rgba(181, 121, 112, 0.5)',
+      letterSpacing: 2
     }).setOrigin(0.5)
   }
 
@@ -203,32 +201,33 @@ export default class GameScene extends Phaser.Scene {
   /** UI superior: score, HP y combo */
   private createUI(w: number): void {
     const panelStyle = {
-      fontFamily: "'Orbitron', monospace",
+      fontFamily: "'Outfit', sans-serif",
       fontSize: '14px',
-      color: '#00ffc8',
+      color: '#4a4744',
+      fontStyle: '600',
     }
 
     const labelStyle = {
-      fontFamily: "'Share Tech Mono', monospace",
-      fontSize: '11px',
-      color: 'rgba(0,255,200,0.5)',
-      letterSpacing: 2
+      fontFamily: "'Outfit', sans-serif",
+      fontSize: '10px',
+      color: 'rgba(74, 71, 68, 0.45)',
+      letterSpacing: 1.5,
+      fontStyle: '600',
     }
 
     // — Score —
-    this.add.text(24, 16, 'SCORE', labelStyle)
+    this.add.text(24, 16, 'PUNTOS', labelStyle)
     this.scoreText = this.add.text(24, 30, '000000', {
       ...panelStyle,
       fontSize: '22px',
-      color: '#00ffc8',
     })
 
     // — HP —
-    this.add.text(w / 2, 16, 'SHIELD', labelStyle).setOrigin(0.5, 0)
+    this.add.text(w / 2, 16, 'ESCUDO', labelStyle).setOrigin(0.5, 0)
     this.hpText = this.add.text(w / 2, 30, this.buildHpString(), {
       ...panelStyle,
       fontSize: '18px',
-      color: '#ff6b6b',
+      color: '#d69f96', // Terracota suave
     }).setOrigin(0.5, 0)
 
     // — Combo —
@@ -236,13 +235,13 @@ export default class GameScene extends Phaser.Scene {
     this.comboText = this.add.text(w - 24, 30, 'x1', {
       ...panelStyle,
       fontSize: '22px',
-      color: '#ffe66d',
+      color: '#b89663', // Ochre suave
     }).setOrigin(1, 0)
   }
 
-  /** Construye el string de corazones para el HP */
+  /** Construye el string de esferas para el HP */
   private buildHpString(): string {
-    return '♦'.repeat(this.hp) + '◇'.repeat(MAX_HP - this.hp)
+    return '●'.repeat(this.hp) + '○'.repeat(MAX_HP - this.hp)
   }
 
   /** Crea una nota musical en una posición aleatoria X */
@@ -265,33 +264,29 @@ export default class GameScene extends Phaser.Scene {
     // — Gráfico del círculo —
     const circle = this.add.graphics()
 
-    // Borde exterior (glow ring)
-    circle.lineStyle(2, type.color, 0.4)
-    circle.strokeCircle(0, 0, NOTE_RADIUS + 4)
-
-    // Círculo principal con gradiente (inner fill)
-    circle.fillStyle(type.color, 0.15)
+    // Círculo principal relleno translúcido suave
+    circle.fillStyle(type.color, 0.25)
     circle.fillCircle(0, 0, NOTE_RADIUS)
 
-    // Borde neon del círculo
-    circle.lineStyle(2, type.color, 0.9)
+    // Borde elegante
+    circle.lineStyle(1.5, type.color, 0.8)
     circle.strokeCircle(0, 0, NOTE_RADIUS)
 
     // — Texto de la nota —
-    const label = this.add.text(0, -2, fullName, {
-      fontFamily: "'Orbitron', monospace",
-      fontSize: '12px',
-      fontStyle: 'bold',
-      color: type.glow,
+    const label = this.add.text(0, -3, fullName, {
+      fontFamily: "'Outfit', sans-serif",
+      fontSize: '13px',
+      fontStyle: '600',
+      color: '#4a4744',
       align: 'center',
     }).setOrigin(0.5)
 
     // — Nota musical Unicode decorativa —
-    const symbol = this.add.text(0, NOTE_RADIUS - 10, '♩', {
-      fontFamily: 'serif',
-      fontSize: '10px',
-      color: type.glow,
-    }).setOrigin(0.5).setAlpha(0.5)
+    const symbol = this.add.text(0, 11, '♩', {
+      fontFamily: "'Outfit', sans-serif",
+      fontSize: '11px',
+      color: '#706c68',
+    }).setOrigin(0.5).setAlpha(0.35)
 
     // — Agrupar todo en un Container —
     const container = this.add.container(x, y, [circle, label, symbol])
@@ -337,7 +332,7 @@ export default class GameScene extends Phaser.Scene {
     // El click en cada nota ya está manejado con container.on('pointerdown')
     // Este handler sirve de respaldo y para efectos de cursor
     const ripple = this.add.graphics()
-    ripple.lineStyle(1, 0xffffff, 0.3)
+    ripple.lineStyle(1, 0x8c8680, 0.3) // Gris sutil para fondo claro
     ripple.strokeCircle(pointer.x, pointer.y, 8)
     this.tweens.add({
       targets: ripple,
@@ -368,10 +363,10 @@ export default class GameScene extends Phaser.Scene {
 
     // Texto flotante de puntos
     const floatText = this.add.text(note.x, note.y, `+${earned}`, {
-      fontFamily: "'Orbitron', monospace",
-      fontSize: multiplier > 1 ? '20px' : '14px',
-      color: multiplier > 1 ? '#ffe66d' : type.glow,
-      fontStyle: 'bold'
+      fontFamily: "'Outfit', sans-serif",
+      fontSize: multiplier > 1 ? '18px' : '13px',
+      fontStyle: '600',
+      color: multiplier > 1 ? '#b89663' : type.glow,
     }).setOrigin(0.5)
 
     this.tweens.add({
@@ -397,9 +392,9 @@ export default class GameScene extends Phaser.Scene {
 
   /** Nota que llegó al fondo sin ser tocada */
   private noteEscaped(note: Phaser.GameObjects.Container): void {
-    // Efecto de "miss" — flash rojo
+    // Efecto de "miss" — flash terracota suave
     const flash = this.add.graphics()
-    flash.fillStyle(0xff3366, 0.2)
+    flash.fillStyle(0xd69f96, 0.15)
     flash.fillRect(0, 0, this.scale.width, this.scale.height)
     this.tweens.add({
       targets: flash,
@@ -421,10 +416,10 @@ export default class GameScene extends Phaser.Scene {
 
     // Nota de miss flotante
     const missText = this.add.text(note.x, this.scale.height - 70, 'MISS', {
-      fontFamily: "'Orbitron', monospace",
-      fontSize: '18px',
-      color: '#ff3366',
-      fontStyle: 'bold'
+      fontFamily: "'Outfit', sans-serif",
+      fontSize: '15px',
+      fontStyle: '600',
+      color: '#b57970',
     }).setOrigin(0.5)
 
     this.tweens.add({
@@ -469,7 +464,7 @@ export default class GameScene extends Phaser.Scene {
 
     // Ring de expansión
     const ring = this.add.graphics()
-    ring.lineStyle(2, color, 0.8)
+    ring.lineStyle(1.5, color, 0.6)
     ring.strokeCircle(x, y, NOTE_RADIUS)
     ring.x = 0
     ring.y = 0
@@ -491,16 +486,14 @@ export default class GameScene extends Phaser.Scene {
 
   /** Muestra mensaje de combo */
   private showComboMessage(x: number, y: number, combo: number): void {
-    const msgs = ['', '', '', 'GOOD!', 'GREAT!', 'AWESOME!', 'PERFECT!', 'INSANE!', 'GODLIKE!']
+    const msgs = ['', '', '', '¡BIEN!', '¡EXCELENTE!', '¡ASOMBROSO!', '¡PERFECTO!', '¡INCREÍBLE!', '¡DIVINO!']
     const msg = msgs[Math.min(combo, msgs.length - 1)] || `${combo}x COMBO!`
 
     const t = this.add.text(x, y, msg, {
-      fontFamily: "'Orbitron', monospace",
-      fontSize: '16px',
-      color: '#ffe66d',
-      fontStyle: 'bold',
-      stroke: '#000000',
-      strokeThickness: 3
+      fontFamily: "'Outfit', sans-serif",
+      fontSize: '14px',
+      fontStyle: '700',
+      color: '#b89663', // Ochre suave
     }).setOrigin(0.5)
 
     this.tweens.add({
@@ -543,68 +536,61 @@ export default class GameScene extends Phaser.Scene {
       // Actualizar el score final en el overlay
       const scoreDisplay = this.gameOverContainer.getAt(2) as Phaser.GameObjects.Text
       if (scoreDisplay) {
-        scoreDisplay.setText(`SCORE: ${this.score.toString().padStart(6, '0')}`)
+        scoreDisplay.setText(`PUNTOS: ${this.score.toString().padStart(6, '0')}`)
       }
     })
   }
 
   /** Crea el overlay de Game Over (oculto al inicio) */
   private createGameOverScreen(w: number, h: number): void {
-    // Fondo semitransparente
+    // Fondo semitransparente color crema claro
     const overlay = this.add.graphics()
-    overlay.fillStyle(0x000000, 0.75)
+    overlay.fillStyle(0xf9f7f5, 0.88)
     overlay.fillRect(-w / 2, -h / 2, w, h)
 
     // Título
-    const title = this.add.text(0, -80, 'GAME OVER', {
-      fontFamily: "'Orbitron', monospace",
-      fontSize: '42px',
-      fontStyle: 'bold',
-      color: '#ff3366',
-      stroke: '#000',
-      strokeThickness: 4,
+    const title = this.add.text(0, -60, 'Juego Terminado', {
+      fontFamily: "'Outfit', sans-serif",
+      fontSize: '36px',
+      fontStyle: '600',
+      color: '#4a4744',
     }).setOrigin(0.5)
 
     // Score final
-    const scoreDisplay = this.add.text(0, -20, 'SCORE: 000000', {
-      fontFamily: "'Share Tech Mono', monospace",
-      fontSize: '20px',
-      color: '#00ffc8',
+    const scoreDisplay = this.add.text(0, -10, 'PUNTOS: 000000', {
+      fontFamily: "'Outfit', sans-serif",
+      fontSize: '18px',
+      color: '#706c68',
     }).setOrigin(0.5)
 
-    // Botón de reinicio
+    // Botón de reinicio (píldora minimalista)
     const btnBg = this.add.graphics()
-    btnBg.lineStyle(2, 0x00ffc8, 0.8)
-    btnBg.fillStyle(0x00ffc8, 0.1)
-    btnBg.fillRoundedRect(-80, 40, 160, 50, 4)
-    btnBg.strokeRoundedRect(-80, 40, 160, 50, 4)
+    btnBg.fillStyle(0xebe8e4, 1)
+    btnBg.fillRoundedRect(-80, 40, 160, 44, 22)
 
-    const btnText = this.add.text(0, 65, 'PLAY AGAIN', {
-      fontFamily: "'Orbitron', monospace",
-      fontSize: '14px',
-      color: '#00ffc8',
-      fontStyle: 'bold',
+    const btnText = this.add.text(0, 62, 'JUGAR DE NUEVO', {
+      fontFamily: "'Outfit', sans-serif",
+      fontSize: '12px',
+      fontStyle: '600',
+      color: '#4a4744',
+      letterSpacing: 1
     }).setOrigin(0.5)
 
     // Hacer el botón interactivo
-    const hitArea = this.add.zone(-80, 40, 160, 50)
+    const hitArea = this.add.zone(-80, 40, 160, 44)
       .setOrigin(0)
       .setInteractive({ useHandCursor: true })
 
     hitArea.on('pointerover', () => {
       btnBg.clear()
-      btnBg.lineStyle(2, 0x00ffc8, 1)
-      btnBg.fillStyle(0x00ffc8, 0.25)
-      btnBg.fillRoundedRect(-80, 40, 160, 50, 4)
-      btnBg.strokeRoundedRect(-80, 40, 160, 50, 4)
+      btnBg.fillStyle(0xdfdad4, 1) // Tono un poco más oscuro
+      btnBg.fillRoundedRect(-80, 40, 160, 44, 22)
     })
 
     hitArea.on('pointerout', () => {
       btnBg.clear()
-      btnBg.lineStyle(2, 0x00ffc8, 0.8)
-      btnBg.fillStyle(0x00ffc8, 0.1)
-      btnBg.fillRoundedRect(-80, 40, 160, 50, 4)
-      btnBg.strokeRoundedRect(-80, 40, 160, 50, 4)
+      btnBg.fillStyle(0xebe8e4, 1)
+      btnBg.fillRoundedRect(-80, 40, 160, 44, 22)
     })
 
     hitArea.on('pointerdown', () => {
