@@ -57,6 +57,59 @@
         margin-top: 2px;
       }
 
+      /* Control de BPM */
+      #bpm-control {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        background: #ebe8e4;
+        padding: 6px 14px;
+        border-radius: 20px;
+        border: 1px solid #dfdad4;
+      }
+
+      .bpm-label {
+        font-size: 11px;
+        font-weight: 600;
+        color: #4a4744;
+        letter-spacing: 0.5px;
+        white-space: nowrap;
+      }
+
+      #bpm-value {
+        font-weight: 700;
+        color: #b89663; /* Color ochre para destacar el valor */
+        display: inline-block;
+        width: 24px;
+        text-align: right;
+      }
+
+      #bpm-slider {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 100px;
+        height: 4px;
+        background: #dfdad4;
+        border-radius: 2px;
+        outline: none;
+        transition: background 0.3s;
+      }
+
+      #bpm-slider::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: #b89663;
+        cursor: pointer;
+        transition: transform 0.1s ease;
+      }
+
+      #bpm-slider::-webkit-slider-thumb:hover {
+        transform: scale(1.2);
+      }
+
       /* Canvas container minimalista */
       #game-container {
         position: relative;
@@ -141,6 +194,10 @@
         <div>
           <div id="title">🎸 Chord Strike</div>
           <div id="subtitle">Destroy the notes — feel the beat</div>
+        </div>
+        <div id="bpm-control">
+          <span class="bpm-label">BPM: <span id="bpm-value">60</span></span>
+          <input type="range" id="bpm-slider" min="10" max="250" value="60" />
         </div>
       </div>
 
