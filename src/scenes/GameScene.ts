@@ -113,6 +113,14 @@ export default class GameScene extends Phaser.Scene {
     // El hit detection se hace en el update comparando posición
     this.input.on('pointerdown', this.handleClick, this)
 
+    // ── Escuchar evento de tono detectado (micrófono) ──
+    this.game.events.on('note-detected', this.handleNoteDetected, this)
+
+    // Apagar la escucha al reiniciar o cerrar la escena para evitar duplicación
+    this.events.once('shutdown', () => {
+      this.game.events.off('note-detected', this.handleNoteDetected, this)
+    })
+
     console.log('🎮 GameScene lista — ¡a destruir notas!')
   }
 
@@ -610,5 +618,10 @@ export default class GameScene extends Phaser.Scene {
 
     this.gameOverContainer.setVisible(false)
     this.gameOverContainer.setAlpha(0)
+  }
+
+  /** Maneja el evento de nota detectada por el micrófono */
+  private handleNoteDetected(detectedNote: string): void {
+    console.log(`🔊 GameScene recibió la nota detectada: ${detectedNote}`)
   }
 }
