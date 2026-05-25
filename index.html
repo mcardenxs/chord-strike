@@ -110,6 +110,31 @@
         transform: scale(1.2);
       }
 
+      /* Botón de control del metrónomo */
+      .control-btn {
+        background: none;
+        border: none;
+        font-size: 14px;
+        cursor: pointer;
+        padding: 4px 8px;
+        border-radius: 4px;
+        color: #706c68;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .control-btn:hover {
+        background: #dfdad4;
+        color: #3b3836;
+      }
+
+      .control-btn.active {
+        color: #5c7566; /* Verde musgo cuando está activo */
+        background: #e8efe9;
+      }
+
       /* Canvas container minimalista */
       #game-container {
         position: relative;
@@ -198,6 +223,7 @@
         <div id="bpm-control">
           <span class="bpm-label">BPM: <span id="bpm-value">60</span></span>
           <input type="range" id="bpm-slider" min="10" max="250" value="60" />
+          <button id="metronome-toggle" class="control-btn" title="Activar metrónomo">🔇</button>
         </div>
       </div>
 

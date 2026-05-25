@@ -58,6 +58,7 @@ export default class GameScene extends Phaser.Scene {
   private spawnTimer: number = 0      // Acumulador de tiempo para spawn
   private bpm: number = 60            // Ritmo de Beats Per Minute
   private spawnIntervalMs: number = 1000 // Frecuencia de aparición de notas
+  private isMetronomeActive: boolean = false // Si el click de metrónomo debe sonar
 
   // — Grupos de objetos —
   private notesGroup!: Phaser.GameObjects.Group
@@ -98,6 +99,10 @@ export default class GameScene extends Phaser.Scene {
     this.bpm = bpmSlider ? parseInt(bpmSlider.value, 10) : 60
     this.spawnIntervalMs = 60000 / this.bpm
 
+    // Leer el estado inicial del metrónomo del DOM
+    const metronomeToggle = document.getElementById('metronome-toggle') as HTMLButtonElement
+    this.isMetronomeActive = metronomeToggle ? metronomeToggle.classList.contains('active') : false
+
     // ── Fondo con gradiente (Graphics) ──
     this.createBackground(width, height)
 
@@ -126,10 +131,14 @@ export default class GameScene extends Phaser.Scene {
     // ── Escuchar cambios de BPM ──
     this.game.events.on('bpm-changed', this.handleBpmChanged, this)
 
+    // ── Escuchar cambios del metrónomo ──
+    this.game.events.on('metronome-toggled', this.handleMetronomeToggled, this)
+
     // Apagar la escucha al reiniciar o cerrar la escena para evitar duplicación
     this.events.once('shutdown', () => {
       this.game.events.off('note-detected', this.handleNoteDetected, this)
       this.game.events.off('bpm-changed', this.handleBpmChanged, this)
+      this.game.events.off('metronome-toggled', this.handleMetronomeToggled, this)
     })
 
     console.log('🎮 GameScene lista — ¡a destruir notas!')
@@ -272,6 +281,11 @@ export default class GameScene extends Phaser.Scene {
     // Velocidad aleatoria escalada por el BPM
     const speedMultiplier = this.bpm / 60
     const speed = Phaser.Math.FloatBetween(NOTE_FALL_SPEED_MIN, NOTE_FALL_SPEED_MAX) * speedMultiplier
+
+    // Si el metrónomo está activo, reproducir click
+    if (this.isMetronomeActive) {
+      this.playMetronomeClick()
+    }
 
     // — Gráfico del círculo —
     const circle = this.add.graphics()
@@ -655,5 +669,31 @@ export default class GameScene extends Phaser.Scene {
     this.bpm = newBpm
     this.spawnIntervalMs = 60000 / newBpm
     console.log(`⏱️ Tempo actualizado en juego: ${newBpm} BPM | Intervalo: ${this.spawnIntervalMs.toFixed(0)}ms`)
+  }
+
+  /** Maneja la alternancia del sonido del metrónomo */
+  private handleMetronomeToggled(active: boolean): void {
+    this.isMetronomeActive = active
+    console.log(`🔊 Metrónomo ${active ? 'activado' : 'desactivado'}`)
+  }
+
+  /** Reproduce un sonido de click sintetizado proceduralmente con Web Audio */
+  private playMetronomeClick(): void {
+    const ctx = (this.sound as any).context as AudioContext
+    if (!ctx) return
+
+    const osc = ctx.createOscillator()
+    const gain = ctx.createGain()
+
+    osc.connect(gain)
+    gain.connect(ctx.destination)
+
+    const now = ctx.currentTime
+    osc.frequency.setValueAtTime(800, now) // Tono corto agudo y limpio
+    gain.gain.setValueAtTime(0.08, now) // volumen controlado
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.05)
+
+    osc.start(now)
+    osc.stop(now + 0.05)
   }
 }

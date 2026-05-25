@@ -65,6 +65,29 @@ if (bpmSlider && bpmValue) {
 }
 
 // ──────────────────────────────────────────
+// Sincronizar alternancia del metrónomo con Phaser
+// ──────────────────────────────────────────
+const metronomeToggle = document.getElementById('metronome-toggle') as HTMLButtonElement
+
+if (metronomeToggle) {
+  let metronomeActive = false
+  metronomeToggle.addEventListener('click', () => {
+    metronomeActive = !metronomeActive
+    if (metronomeActive) {
+      metronomeToggle.classList.add('active')
+      metronomeToggle.textContent = '🔊'
+      metronomeToggle.title = 'Desactivar metrónomo'
+    } else {
+      metronomeToggle.classList.remove('active')
+      metronomeToggle.textContent = '🔇'
+      metronomeToggle.title = 'Activar metrónomo'
+    }
+    // Emitir el cambio de metrónomo al juego de Phaser
+    game.events.emit('metronome-toggled', metronomeActive)
+  })
+}
+
+// ──────────────────────────────────────────
 // Iniciar PitchDetector en background
 // ──────────────────────────────────────────
 // Por ahora solo logea las notas detectadas en consola.
