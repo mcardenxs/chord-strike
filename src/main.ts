@@ -63,10 +63,10 @@ const pitchDetector = new PitchDetectorService()
 window.addEventListener('click', async () => {
   if (!pitchDetector.running) {
     await pitchDetector.start((result) => {
-      // En v2: enviar evento a GameScene
-      // game.events.emit('noteDetected', result.note)
+      // Emitir el evento de nota detectada al juego de Phaser
+      game.events.emit('note-detected', result.note)
 
-      // Por ahora solo logeamos con info útil
+      // Logear en consola la nota detectada
       console.log(
         `🎵 Nota detectada: ${result.note} | ${result.frequency.toFixed(1)} Hz | claridad: ${(result.clarity * 100).toFixed(0)}%`
       )
