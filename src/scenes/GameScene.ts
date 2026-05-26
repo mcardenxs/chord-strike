@@ -147,6 +147,9 @@ export default class GameScene extends Phaser.Scene {
     // ── Escuchar evento de tono detectado (micrófono) ──
     this.game.events.on('note-detected', this.handleNoteDetected, this)
 
+    // ── Escuchar evento de acorde detectado (micrófono) ──
+    this.game.events.on('chord-detected', this.handleChordDetected, this)
+
     // ── Escuchar cambios de BPM ──
     this.game.events.on('bpm-changed', this.handleBpmChanged, this)
 
@@ -156,6 +159,7 @@ export default class GameScene extends Phaser.Scene {
     // Apagar la escucha al reiniciar o cerrar la escena para evitar duplicación
     this.events.once('shutdown', () => {
       this.game.events.off('note-detected', this.handleNoteDetected, this)
+      this.game.events.off('chord-detected', this.handleChordDetected, this)
       this.game.events.off('bpm-changed', this.handleBpmChanged, this)
       this.game.events.off('metronome-toggled', this.handleMetronomeToggled, this)
     })
@@ -732,9 +736,8 @@ export default class GameScene extends Phaser.Scene {
     if (!match) return
     const detectedBase = match[0]
 
-    // Buscar notas simples que coincidan y acordes activos
-    const matchingSingleNotes: Phaser.GameObjects.Container[] = []
-    const activeChords: Phaser.GameObjects.Container[] = []
+    // Buscar notas simples en pantalla que coincidan con la nota base
+    const matchingNotes: Phaser.GameObjects.Container[] = []
 
     this.notesGroup.getChildren().forEach((obj) => {
       const note = obj as Phaser.GameObjects.Container
@@ -745,75 +748,49 @@ export default class GameScene extends Phaser.Scene {
         const matchName = noteName.match(/^[A-G]#?/)
         const noteBase = matchName ? matchName[0] : ''
         if (noteBase === detectedBase) {
-          matchingSingleNotes.push(note)
+          matchingNotes.push(note)
         }
-      } else if (noteType === 'chord') {
-        activeChords.push(note)
       }
     })
 
-    // 1. Primero intentar destruir una nota simple que coincida (priorizando la más baja)
-    if (matchingSingleNotes.length > 0) {
+    // Si hay notas que coinciden, destruir la que esté más abajo (mayor coordenada y)
+    if (matchingNotes.length > 0) {
       // Ordenar por coordenada y de mayor a menor (las más bajas primero)
-      matchingSingleNotes.sort((a, b) => b.y - a.y)
-      const lowestNote = matchingSingleNotes[0]
+      matchingNotes.sort((a, b) => b.y - a.y)
+      const lowestNote = matchingNotes[0]
       
       this.destroyNote(lowestNote)
       console.log(`🎯 Nota simple ${lowestNote.getData('name')} destruida por tono de micrófono!`)
-      return
     }
+  }
 
-    // 2. Si no hay nota simple que coincida, buscar el acorde activo más bajo que requiera esa nota y no la haya registrado
+  /** Maneja el evento de acorde detectado por el micrófono */
+  private handleChordDetected(detectedChord: string): void {
+    if (this.isGameOver) return
+
+    // Buscar acordes activos en pantalla que coincidan con el acorde detectado
     const matchingChords: Phaser.GameObjects.Container[] = []
-    activeChords.forEach((chordContainer) => {
-      const notes = chordContainer.getData('notes') as string[]
-      const playedNotes = chordContainer.getData('playedNotes') as string[]
-      
-      if (notes.includes(detectedBase) && !playedNotes.includes(detectedBase)) {
-        matchingChords.push(chordContainer)
+
+    this.notesGroup.getChildren().forEach((obj) => {
+      const note = obj as Phaser.GameObjects.Container
+      const noteType = note.getData('noteType') as string
+
+      if (noteType === 'chord') {
+        const chordName = note.getData('name') as string // Ej: "Am", "C"
+        if (chordName === detectedChord) {
+          matchingChords.push(note)
+        }
       }
     })
 
+    // Si hay acordes que coinciden, destruir el que esté más abajo (mayor coordenada y)
     if (matchingChords.length > 0) {
       // Ordenar por coordenada y de mayor a menor (las más bajas primero)
       matchingChords.sort((a, b) => b.y - a.y)
       const lowestChord = matchingChords[0]
 
-      const notes = lowestChord.getData('notes') as string[]
-      const playedNotes = lowestChord.getData('playedNotes') as string[]
-      
-      // Registrar la nota
-      playedNotes.push(detectedBase)
-      lowestChord.setData('playedNotes', playedNotes)
-
-      // Actualizar visualmente la etiqueta de notas (ej: A [C] E)
-      const notesTextObject = lowestChord.getData('notesTextObject') as Phaser.GameObjects.Text
-      if (notesTextObject) {
-        const formatted = notes.map(noteName => {
-          if (playedNotes.includes(noteName)) {
-            return `[${noteName}]`
-          }
-          return noteName
-        }).join('  ')
-        notesTextObject.setText(formatted)
-      }
-
-      // Feedback visual: pequeño pulso de escala al acertar una nota
-      this.tweens.add({
-        targets: lowestChord,
-        scale: 1.15,
-        duration: 100,
-        yoyo: true,
-        ease: 'Quad.easeInOut'
-      })
-
-      console.log(`🎵 Nota '${detectedBase}' registrada en acorde '${lowestChord.getData('name')}'!`)
-
-      // Si se completaron todas las notas, destruir el acorde
-      if (playedNotes.length === notes.length) {
-        this.destroyNote(lowestChord)
-        console.log(`🎯 Acorde ${lowestChord.getData('name')} completado y destruido!`)
-      }
+      this.destroyNote(lowestChord)
+      console.log(`🎯 Acorde ${lowestChord.getData('name')} destruido por sonido de acorde completo!`)
     }
   }
 

@@ -10,6 +10,7 @@
 import Phaser from 'phaser'
 import GameScene from './scenes/GameScene'
 import { PitchDetectorService } from './audio/pitchDetector'
+import { ChordDetectorService } from './audio/chordDetector'
 
 // ──────────────────────────────────────────
 // Configuración de Phaser
@@ -88,16 +89,13 @@ if (metronomeToggle) {
 }
 
 // ──────────────────────────────────────────
-// Iniciar PitchDetector en background
+// Iniciar Detectores de Audio en background
 // ──────────────────────────────────────────
-// Por ahora solo logea las notas detectadas en consola.
-// En v2, este callback se conectará a GameScene para que
-// tocar la nota correcta en tu instrumento destruya el enemigo.
 
 const pitchDetector = new PitchDetectorService()
+const chordDetector = new ChordDetectorService()
 
-// Intentar iniciar el micrófono después de 1 segundo
-// (esperar a que el juego esté listo y la página interactuada)
+// Intentar iniciar el micrófono con el click de interacción
 window.addEventListener('click', async () => {
   if (!pitchDetector.running) {
     await pitchDetector.start((result) => {
@@ -110,6 +108,14 @@ window.addEventListener('click', async () => {
       )
     })
   }
+
+  if (!chordDetector.running) {
+    await chordDetector.start((chordName) => {
+      // Emitir el evento de acorde detectado al juego de Phaser
+      game.events.emit('chord-detected', chordName)
+      console.log(`🎵 Acorde detectado: ${chordName}`)
+    })
+  }
 }, { once: true })
 
 // ──────────────────────────────────────────
@@ -117,4 +123,5 @@ window.addEventListener('click', async () => {
 // ──────────────────────────────────────────
 window.addEventListener('beforeunload', () => {
   pitchDetector.stop()
+  chordDetector.stop()
 })
