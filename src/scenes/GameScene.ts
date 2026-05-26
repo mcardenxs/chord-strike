@@ -26,15 +26,15 @@ interface NoteData {
   points: number     // Puntos al destruirla
 }
 
-/** Paleta de notas disponibles con sus propiedades visuales */
+/** Paleta de notas disponibles con sus propiedades visuales (escala cromática vibrante) */
 const NOTE_TYPES: NoteData[] = [
-  { name: 'C',  color: 0x8fa89b, glow: '#5c7566', points: 100 }, // Verde Sabia
-  { name: 'D',  color: 0xd69f96, glow: '#b57970', points: 150 }, // Terracota
-  { name: 'E',  color: 0xe3c18f, glow: '#b89663', points: 120 }, // Ochre
-  { name: 'F',  color: 0xb5a3c4, glow: '#8c779c', points: 130 }, // Lavanda
-  { name: 'G',  color: 0x9cb0c2, glow: '#708699', points: 110 }, // Azul Pizarra
-  { name: 'A',  color: 0xe0ad8a, glow: '#b8815a', points: 140 }, // Melocotón
-  { name: 'B',  color: 0xdca6b5, glow: '#b57a8b', points: 160 }, // Rosa Palo
+  { name: 'Do',  color: 0xff3b30, glow: '#ff3b30', points: 100 }, // Do (Rojo)
+  { name: 'Re',  color: 0xff9500, glow: '#ff9500', points: 150 }, // Re (Naranja)
+  { name: 'Mi',  color: 0xffcc00, glow: '#ffcc00', points: 120 }, // Mi (Amarillo)
+  { name: 'Fa',  color: 0x4cd964, glow: '#4cd964', points: 130 }, // Fa (Verde)
+  { name: 'Sol',  color: 0x5ac8fa, glow: '#5ac8fa', points: 110 }, // Sol (Cian)
+  { name: 'La',  color: 0x007aff, glow: '#007aff', points: 140 }, // La (Azul)
+  { name: 'Si',  color: 0xff2d55, glow: '#ff2d55', points: 160 }, // Si (Violeta/Rosa)
 ]
 
 /** Datos de un acorde en el juego */
@@ -46,21 +46,21 @@ interface ChordData {
   points: number;      // Puntos al completarlo
 }
 
-/** Tipos de acordes diatónicos en la escala de Do Mayor */
+/** Tipos de acordes diatónicos en la escala de Do Mayor con colores cromáticos coincidentes */
 const CHORD_TYPES: ChordData[] = [
-  { name: 'C',   notes: ['C', 'E', 'G'], color: 0x8fa89b, glow: '#5c7566', points: 300 }, // Do Mayor
-  { name: 'Dm',  notes: ['D', 'F', 'A'], color: 0xd69f96, glow: '#b57970', points: 350 }, // Re Menor
-  { name: 'Em',  notes: ['E', 'G', 'B'], color: 0xe3c18f, glow: '#b89663', points: 320 }, // Mi Menor
-  { name: 'F',   notes: ['F', 'A', 'C'], color: 0xb5a3c4, glow: '#8c779c', points: 340 }, // Fa Mayor
-  { name: 'G',   notes: ['G', 'B', 'D'], color: 0x9cb0c2, glow: '#708699', points: 310 }, // Sol Mayor
-  { name: 'Am',  notes: ['A', 'C', 'E'], color: 0xe0ad8a, glow: '#b8815a', points: 330 }, // La Menor
+  { name: 'Do',   notes: ['Do', 'Mi', 'Sol'], color: 0xff3b30, glow: '#ff3b30', points: 300 }, // Do Mayor
+  { name: 'Rem',  notes: ['Re', 'Fa', 'La'], color: 0xff9500, glow: '#ff9500', points: 350 }, // Re Menor
+  { name: 'Mim',  notes: ['Mi', 'Sol', 'Si'], color: 0xffcc00, glow: '#ffcc00', points: 320 }, // Mi Menor
+  { name: 'Fa',   notes: ['Fa', 'La', 'Do'], color: 0x4cd964, glow: '#4cd964', points: 340 }, // Fa Mayor
+  { name: 'Sol',  notes: ['Sol', 'Si', 'Re'], color: 0x5ac8fa, glow: '#5ac8fa', points: 310 }, // Sol Mayor
+  { name: 'Lam',  notes: ['La', 'Do', 'Mi'], color: 0x007aff, glow: '#007aff', points: 330 }, // La Menor
 ]
 
-const OCTAVES = [2, 3, 4, 5]        // Octavas posibles (ej: C4, A3)
+const OCTAVES = [3, 4, 5]            // Octavas posibles
 const NOTE_RADIUS = 28               // Radio del círculo base
 const CHORD_RADIUS = 35              // Radio de la burbuja del acorde
-const NOTE_FALL_SPEED_MIN = 60       // px/segundo mínimo
-const NOTE_FALL_SPEED_MAX = 140      // px/segundo máximo
+const BASE_FALL_SPEED = 100          // Velocidad base uniforme (px/segundo)
+const LANES = [100, 220, 340, 460, 580, 700] // Carriles verticales fijos
 const MAX_HP = 5                     // Vidas del jugador
 
 // ──────────────────────────────────────────────
@@ -199,19 +199,25 @@ export default class GameScene extends Phaser.Scene {
   // MÉTODOS PRIVADOS
   // ─────────────────────────────────────────
 
-  /** Fondo crema con pentagrama musical muy sutil */
+  /** Fondo oscuro de piano roll con rejilla de carriles */
   private createBackground(w: number, h: number): void {
     const bg = this.add.graphics()
-    bg.fillStyle(0xf9f7f5, 1) // Fondo crema claro sólido
+    // Fondo oscuro profundo
+    bg.fillStyle(0x08070d, 1)
     bg.fillRect(0, 0, w, h)
 
-    // Pentagrama musical muy tenue en el centro de la pantalla
-    const staff = this.add.graphics()
-    staff.lineStyle(1, 0xebe8e4, 1)
-    const startY = h / 2 - 40
-    for (let i = 0; i < 5; i++) {
-      staff.lineBetween(40, startY + i * 20, w - 40, startY + i * 20)
+    // Rejilla de piano roll sutil
+    bg.lineStyle(1, 0x1a1829, 0.4)
+    
+    // Líneas horizontales de tiempo
+    for (let y = 0; y < h; y += 60) {
+      bg.lineBetween(0, y, w, y)
     }
+
+    // Líneas verticales de carriles
+    LANES.forEach(laneX => {
+      bg.lineBetween(laneX, 0, laneX, h)
+    })
   }
 
   /** Línea de peligro sutil en la parte inferior */
@@ -219,16 +225,16 @@ export default class GameScene extends Phaser.Scene {
     const dangerY = h - 50
     const line = this.add.graphics()
 
-    // Línea delgada color arcilla suave
-    line.lineStyle(1, 0xd69f96, 0.4)
+    // Línea de límite roja/rosa vibrante
+    line.lineStyle(1.5, 0xff2d55, 0.6)
     line.lineBetween(40, dangerY, w - 40, dangerY)
 
     // Texto "LÍMITE"
     this.add.text(w / 2, dangerY - 14, '— LÍMITE —', {
       fontFamily: "'Outfit', sans-serif",
       fontSize: '10px',
-      color: 'rgba(181, 121, 112, 0.5)',
-  letterSpacing: 2
+      color: 'rgba(255, 45, 85, 0.7)',
+      letterSpacing: 2
     }).setOrigin(0.5)
   }
 
@@ -246,14 +252,14 @@ export default class GameScene extends Phaser.Scene {
     const panelStyle = {
       fontFamily: "'Outfit', sans-serif",
       fontSize: '14px',
-      color: '#4a4744',
+      color: '#ffffff',
       fontStyle: '600',
     }
 
     const labelStyle = {
       fontFamily: "'Outfit', sans-serif",
       fontSize: '10px',
-      color: 'rgba(74, 71, 68, 0.45)',
+      color: 'rgba(163, 158, 184, 0.7)',
       letterSpacing: 1.5,
       fontStyle: '600',
     }
@@ -270,7 +276,7 @@ export default class GameScene extends Phaser.Scene {
     this.hpText = this.add.text(w / 2, 30, this.buildHpString(), {
       ...panelStyle,
       fontSize: '18px',
-      color: '#d69f96', // Terracota suave
+      color: '#ff2d55', // Rosa/Rojo vibrante
     }).setOrigin(0.5, 0)
 
     // — Combo —
@@ -278,7 +284,7 @@ export default class GameScene extends Phaser.Scene {
     this.comboText = this.add.text(w - 24, 30, 'x1', {
       ...panelStyle,
       fontSize: '22px',
-      color: '#b89663', // Ochre suave
+      color: '#ffcc00', // Amarillo vibrante
     }).setOrigin(1, 0)
   }
 
@@ -287,59 +293,89 @@ export default class GameScene extends Phaser.Scene {
     return '●'.repeat(this.hp) + '○'.repeat(MAX_HP - this.hp)
   }
 
-  /** Crea una nota musical o un acorde en una posición aleatoria X */
+  /** Crea una nota musical o un acorde en un carril vertical libre de superposiciones */
   private spawnNote(): void {
-    const { width } = this.scale
-
     // Decidir si se genera una nota simple (70%) o un acorde (30%)
     const spawnChord = Phaser.Math.Between(1, 100) <= 30
 
-    // Velocidad aleatoria escalada por el BPM
+    // Velocidad uniforme escalada por el BPM
     const speedMultiplier = this.bpm / 60
-    const speed = Phaser.Math.FloatBetween(NOTE_FALL_SPEED_MIN, NOTE_FALL_SPEED_MAX) * speedMultiplier
+    const speed = BASE_FALL_SPEED * speedMultiplier
 
     // Si el metrónomo está activo, reproducir click
     if (this.isMetronomeActive) {
       this.playMetronomeClick()
     }
 
+    // ── Sistema de Prevención de Superposición por Carriles ──
+    const availableLanes = LANES.filter(laneX => {
+      // Un carril está libre si ninguna nota activa está en ese carril y arriba (y < 140)
+      const isOccupied = this.notesGroup.getChildren().some(obj => {
+        const note = obj as Phaser.GameObjects.Container
+        return Math.abs(note.x - laneX) < 10 && note.y < 140
+      })
+      return !isOccupied
+    })
+
+    let x: number
+    if (availableLanes.length > 0) {
+      x = Phaser.Math.RND.pick(availableLanes)
+    } else {
+      // Fallback: Elegir el carril cuya nota más alta esté más abajo en la pantalla (mayor coordenada Y)
+      let bestLane = LANES[0]
+      let maxTopY = -Infinity
+
+      LANES.forEach(laneX => {
+        let topY = Infinity
+        this.notesGroup.getChildren().forEach(obj => {
+          const note = obj as Phaser.GameObjects.Container
+          if (Math.abs(note.x - laneX) < 10 && note.y < topY) {
+            topY = note.y
+          }
+        })
+        if (topY > maxTopY) {
+          maxTopY = topY
+          bestLane = laneX
+        }
+      })
+      x = bestLane
+    }
+
+    const y = -CHORD_RADIUS - 10
     let container: Phaser.GameObjects.Container
     const circle = this.add.graphics()
 
     if (spawnChord) {
       // ──────────────────────────────────────────
-      // SPAWN DE ACORDE (C, Dm, Em, F, G, Am)
+      // SPAWN DE ACORDE (Do, Rem, Mim, Fa, Sol, Lam)
       // ──────────────────────────────────────────
       const chord = CHORD_TYPES[Phaser.Math.Between(0, CHORD_TYPES.length - 1)]
-      const margin = CHORD_RADIUS + 10
-      const x = Phaser.Math.Between(margin, width - margin)
-      const y = -CHORD_RADIUS - 10
 
-      // Círculo principal relleno translúcido suave
-      circle.fillStyle(chord.color, 0.25)
+      // Círculo principal relleno translúcido más opaco para contraste
+      circle.fillStyle(chord.color, 0.35)
       circle.fillCircle(0, 0, CHORD_RADIUS)
 
       // Doble borde elegante (estética musical para acordes)
-      circle.lineStyle(1.5, chord.color, 0.8)
+      circle.lineStyle(2, chord.color, 0.9)
       circle.strokeCircle(0, 0, CHORD_RADIUS)
-      circle.lineStyle(1, chord.color, 0.4)
+      circle.lineStyle(1.2, chord.color, 0.5)
       circle.strokeCircle(0, 0, CHORD_RADIUS - 4)
 
-      // Texto del nombre del acorde (ej: "Am")
+      // Texto del nombre del acorde (ej: "Lam") en color blanco
       const label = this.add.text(0, -9, chord.name, {
         fontFamily: "'Outfit', sans-serif",
         fontSize: '14px',
         fontStyle: '700',
-        color: '#4a4744',
+        color: '#ffffff',
         align: 'center',
       }).setOrigin(0.5)
 
-      // Lista de notas requeridas (ej: "A  C  E")
+      // Lista de notas requeridas (ej: "La  Do  Mi") en color blanco suave
       const notesLabel = this.add.text(0, 10, chord.notes.join('  '), {
         fontFamily: "'Outfit', sans-serif",
         fontSize: '10px',
         fontStyle: '600',
-        color: '#706c68',
+        color: 'rgba(255, 255, 255, 0.75)',
         align: 'center',
       }).setOrigin(0.5)
 
@@ -359,29 +395,26 @@ export default class GameScene extends Phaser.Scene {
 
     } else {
       // ──────────────────────────────────────────
-      // SPAWN DE NOTA SIMPLE (C4, E3, etc.)
+      // SPAWN DE NOTA SIMPLE (Do4, Re3, etc.)
       // ──────────────────────────────────────────
       const type = NOTE_TYPES[Phaser.Math.Between(0, NOTE_TYPES.length - 1)]
       const octave = OCTAVES[Phaser.Math.Between(0, OCTAVES.length - 1)]
       const fullName = `${type.name}${octave}`
-      const margin = NOTE_RADIUS + 10
-      const x = Phaser.Math.Between(margin, width - margin)
-      const y = -NOTE_RADIUS - 10
 
-      // Círculo principal relleno translúcido suave
-      circle.fillStyle(type.color, 0.25)
+      // Círculo principal relleno translúcido más opaco para contraste
+      circle.fillStyle(type.color, 0.35)
       circle.fillCircle(0, 0, NOTE_RADIUS)
 
       // Borde elegante
-      circle.lineStyle(1.5, type.color, 0.8)
+      circle.lineStyle(2, type.color, 0.9)
       circle.strokeCircle(0, 0, NOTE_RADIUS)
 
-      // Texto de la nota
+      // Texto de la nota en color blanco
       const label = this.add.text(0, -3, fullName, {
         fontFamily: "'Outfit', sans-serif",
         fontSize: '13px',
         fontStyle: '600',
-        color: '#4a4744',
+        color: '#ffffff',
         align: 'center',
       }).setOrigin(0.5)
 
@@ -389,8 +422,8 @@ export default class GameScene extends Phaser.Scene {
       const symbol = this.add.text(0, 11, '♩', {
         fontFamily: "'Outfit', sans-serif",
         fontSize: '11px',
-        color: '#706c68',
-      }).setOrigin(0.5).setAlpha(0.35)
+        color: 'rgba(255, 255, 255, 0.5)',
+      }).setOrigin(0.5).setAlpha(0.5)
 
       // Agrupar en contenedor
       container = this.add.container(x, y, [circle, label, symbol])
@@ -438,7 +471,7 @@ export default class GameScene extends Phaser.Scene {
     // El click en cada nota ya está manejado con container.on('pointerdown')
     // Este handler sirve de respaldo y para efectos de cursor
     const ripple = this.add.graphics()
-    ripple.lineStyle(1, 0x8c8680, 0.3) // Gris sutil para fondo claro
+    ripple.lineStyle(1, 0xffffff, 0.4) // Blanco translúcido para fondo oscuro
     ripple.strokeCircle(pointer.x, pointer.y, 8)
     this.tweens.add({
       targets: ripple,
@@ -513,9 +546,9 @@ export default class GameScene extends Phaser.Scene {
 
   /** Nota que llegó al fondo sin ser tocada */
   private noteEscaped(note: Phaser.GameObjects.Container): void {
-    // Efecto de "miss" — flash terracota suave
+    // Efecto de "miss" — flash rojo/rosa vibrante
     const flash = this.add.graphics()
-    flash.fillStyle(0xd69f96, 0.15)
+    flash.fillStyle(0xff2d55, 0.12)
     flash.fillRect(0, 0, this.scale.width, this.scale.height)
     this.tweens.add({
       targets: flash,
@@ -540,7 +573,7 @@ export default class GameScene extends Phaser.Scene {
       fontFamily: "'Outfit', sans-serif",
       fontSize: '15px',
       fontStyle: '600',
-      color: '#b57970',
+      color: '#ff2d55',
     }).setOrigin(0.5)
 
     this.tweens.add({
@@ -664,36 +697,36 @@ export default class GameScene extends Phaser.Scene {
 
   /** Crea el overlay de Game Over (oculto al inicio) */
   private createGameOverScreen(w: number, h: number): void {
-    // Fondo semitransparente color crema claro
+    // Fondo semitransparente color oscuro profundo
     const overlay = this.add.graphics()
-    overlay.fillStyle(0xf9f7f5, 0.88)
+    overlay.fillStyle(0x08070d, 0.92)
     overlay.fillRect(-w / 2, -h / 2, w, h)
 
-    // Título
+    // Título en blanco
     const title = this.add.text(0, -60, 'Juego Terminado', {
       fontFamily: "'Outfit', sans-serif",
       fontSize: '36px',
       fontStyle: '600',
-      color: '#4a4744',
+      color: '#ffffff',
     }).setOrigin(0.5)
 
-    // Score final
+    // Score final en color amarillo vibrante
     const scoreDisplay = this.add.text(0, -10, 'PUNTOS: 000000', {
       fontFamily: "'Outfit', sans-serif",
       fontSize: '18px',
-      color: '#706c68',
+      color: '#ffcc00',
     }).setOrigin(0.5)
 
-    // Botón de reinicio (píldora minimalista)
+    // Botón de reinicio (píldora oscura moderna)
     const btnBg = this.add.graphics()
-    btnBg.fillStyle(0xebe8e4, 1)
+    btnBg.fillStyle(0x1a1829, 1)
     btnBg.fillRoundedRect(-80, 40, 160, 44, 22)
 
     const btnText = this.add.text(0, 62, 'JUGAR DE NUEVO', {
       fontFamily: "'Outfit', sans-serif",
       fontSize: '12px',
       fontStyle: '600',
-      color: '#4a4744',
+      color: '#ffffff',
       letterSpacing: 1
     }).setOrigin(0.5)
 
@@ -704,13 +737,13 @@ export default class GameScene extends Phaser.Scene {
 
     hitArea.on('pointerover', () => {
       btnBg.clear()
-      btnBg.fillStyle(0xdfdad4, 1) // Tono un poco más oscuro
+      btnBg.fillStyle(0x2d2b3e, 1) // Tono un poco más claro al hacer hover
       btnBg.fillRoundedRect(-80, 40, 160, 44, 22)
     })
 
     hitArea.on('pointerout', () => {
       btnBg.clear()
-      btnBg.fillStyle(0xebe8e4, 1)
+      btnBg.fillStyle(0x1a1829, 1)
       btnBg.fillRoundedRect(-80, 40, 160, 44, 22)
     })
 
@@ -731,8 +764,8 @@ export default class GameScene extends Phaser.Scene {
   private handleNoteDetected(detectedNote: string): void {
     if (this.isGameOver) return
 
-    // Obtener la nota base detectada (ej: "C4" -> "C", "F#3" -> "F#")
-    const match = detectedNote.match(/^[A-G]#?/)
+    // Obtener la nota base detectada (ej: "Do4" -> "Do", "Fa#3" -> "Fa#")
+    const match = detectedNote.match(/^(Do|Re|Mi|Fa|Sol|La|Si)#?/)
     if (!match) return
     const detectedBase = match[0]
 
@@ -744,8 +777,8 @@ export default class GameScene extends Phaser.Scene {
       const noteType = note.getData('noteType') as string
 
       if (noteType === 'single') {
-        const noteName = note.getData('name') as string // Ej: "C4"
-        const matchName = noteName.match(/^[A-G]#?/)
+        const noteName = note.getData('name') as string // Ej: "Do4"
+        const matchName = noteName.match(/^(Do|Re|Mi|Fa|Sol|La|Si)#?/)
         const noteBase = matchName ? matchName[0] : ''
         if (noteBase === detectedBase) {
           matchingNotes.push(note)

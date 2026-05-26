@@ -9,13 +9,13 @@
 
 // Plantillas binarias de los acordes: 1 significa que la nota debe estar presente, 0 que no.
 const CHORD_TEMPLATES: { [key: string]: number[] } = {
-  // Índices: C=0, C#=1, D=2, D#=3, E=4, F=5, F#=6, G=7, G#=8, A=9, A#=10, B=11
-  'C':  [1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0], // C, E, G
-  'Dm': [0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0], // D, F, A
-  'Em': [0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1], // E, G, B
-  'F':  [1, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0], // F, A, C
-  'G':  [0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 1], // G, B, D
-  'Am': [1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0], // A, C, E
+  // Índices: Do=0, Do#=1, Re=2, Re#=3, Mi=4, Fa=5, Fa#=6, Sol=7, Sol#=8, La=9, La#=10, Si=11
+  'Do':  [1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0], // Do, Mi, Sol
+  'Rem': [0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0], // Re, Fa, La
+  'Mim': [0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1], // Mi, Sol, Si
+  'Fa':  [1, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0], // Fa, La, Do
+  'Sol': [0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 1], // Sol, Si, Re
+  'Lam': [1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0], // La, Do, Mi
 }
 
 export type ChordDetectedCallback = (chordName: string) => void

@@ -51,17 +51,56 @@ const game = new Phaser.Game(config)
 console.log('🎸 Chord Strike arrancado —', game)
 
 // ──────────────────────────────────────────
-// Sincronizar slider de BPM con Phaser
+// Sincronizar controles de BPM con Phaser
 // ──────────────────────────────────────────
 const bpmSlider = document.getElementById('bpm-slider') as HTMLInputElement
-const bpmValue = document.getElementById('bpm-value')
+const bpmInput = document.getElementById('bpm-input') as HTMLInputElement
+const bpmMinus = document.getElementById('bpm-minus') as HTMLButtonElement
+const bpmPlus = document.getElementById('bpm-plus') as HTMLButtonElement
 
-if (bpmSlider && bpmValue) {
+function updateBpm(value: number) {
+  // Asegurar límites [10..250]
+  const cleanValue = Math.max(10, Math.min(250, value))
+  
+  if (bpmSlider) bpmSlider.value = cleanValue.toString()
+  if (bpmInput) bpmInput.value = cleanValue.toString()
+  
+  // Emitir cambio de BPM a las escenas de Phaser
+  game.events.emit('bpm-changed', cleanValue)
+}
+
+if (bpmSlider) {
   bpmSlider.addEventListener('input', (e) => {
-    const val = (e.target as HTMLInputElement).value
-    bpmValue.textContent = val
-    // Emitir cambio de BPM a las escenas de Phaser
-    game.events.emit('bpm-changed', parseInt(val, 10))
+    const val = parseInt((e.target as HTMLInputElement).value, 10)
+    updateBpm(val)
+  })
+}
+
+if (bpmInput) {
+  bpmInput.addEventListener('change', (e) => {
+    let val = parseInt((e.target as HTMLInputElement).value, 10)
+    if (isNaN(val)) val = 60
+    updateBpm(val)
+  })
+  bpmInput.addEventListener('keyup', () => {
+    const val = parseInt(bpmInput.value, 10)
+    if (!isNaN(val) && val >= 10 && val <= 250) {
+      updateBpm(val)
+    }
+  })
+}
+
+if (bpmMinus) {
+  bpmMinus.addEventListener('click', () => {
+    const currentVal = parseInt(bpmInput ? bpmInput.value : (bpmSlider ? bpmSlider.value : '60'), 10)
+    updateBpm(currentVal - 1)
+  })
+}
+
+if (bpmPlus) {
+  bpmPlus.addEventListener('click', () => {
+    const currentVal = parseInt(bpmInput ? bpmInput.value : (bpmSlider ? bpmSlider.value : '60'), 10)
+    updateBpm(currentVal + 1)
   })
 }
 

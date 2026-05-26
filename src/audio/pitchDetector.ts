@@ -13,8 +13,8 @@
 
 import { PitchDetector } from 'pitchy'
 
-// Nombres de las notas musicales en español / inglés
-const NOTE_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
+// Nombres de las notas musicales en español
+const NOTE_NAMES = ['Do', 'Do#', 'Re', 'Re#', 'Mi', 'Fa', 'Fa#', 'Sol', 'Sol#', 'La', 'La#', 'Si']
 
 /**
  * Convierte una frecuencia en Hz a nombre de nota musical.

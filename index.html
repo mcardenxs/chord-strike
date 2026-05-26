@@ -14,7 +14,8 @@
       }
 
       body {
-        background: #f5f2eb; /* Fondo crema cálido y sutil */
+        background: radial-gradient(circle at 50% 30%, #161424 0%, #08070d 100%);
+        color: #f1eff7;
         display: flex;
         flex-direction: column;
         align-items: center;
@@ -24,176 +25,279 @@
         overflow: hidden;
       }
 
+      /* Glow ambiental de fondo */
+      .ambient-glow {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 600px;
+        height: 600px;
+        background: radial-gradient(circle, rgba(124, 76, 217, 0.08) 0%, rgba(0, 0, 0, 0) 70%);
+        pointer-events: none;
+        z-index: 0;
+      }
+
       #game-wrapper {
         position: relative;
         z-index: 1;
         display: flex;
         flex-direction: column;
         align-items: center;
-        gap: 16px;
+        gap: 20px;
       }
 
       /* Header */
       #header {
         display: flex;
         align-items: center;
-        gap: 16px;
         width: 800px;
         justify-content: space-between;
+        padding: 0 4px;
+      }
+
+      #brand {
+        display: flex;
+        flex-direction: column;
       }
 
       #title {
-        font-family: 'Outfit', sans-serif;
         font-weight: 700;
-        font-size: 24px;
-        color: #3b3836; /* Carbón cálido */
-        letter-spacing: 0.5px;
+        font-size: 26px;
+        letter-spacing: -0.5px;
+        background: linear-gradient(135deg, #ff3b30 0%, #ff2d55 30%, #007aff 70%, #4cd964 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.3));
       }
 
       #subtitle {
         font-size: 13px;
-        color: #8c8680; /* Arcilla grisácea suave */
+        color: #89869c;
         font-weight: 400;
-        margin-top: 2px;
+        margin-top: 4px;
+        letter-spacing: 0.2px;
       }
 
-      /* Control de BPM */
-      #bpm-control {
+      /* Panel de Control de BPM (Glassmorphism) */
+      #bpm-panel {
         display: flex;
         align-items: center;
-        gap: 12px;
-        background: #ebe8e4;
-        padding: 6px 14px;
-        border-radius: 20px;
-        border: 1px solid #dfdad4;
+        gap: 16px;
+        background: rgba(25, 23, 38, 0.65);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        padding: 8px 18px;
+        border-radius: 16px;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.1);
+      }
+
+      .control-group {
+        display: flex;
+        align-items: center;
+        gap: 6px;
       }
 
       .bpm-label {
         font-size: 11px;
         font-weight: 600;
-        color: #4a4744;
-        letter-spacing: 0.5px;
-        white-space: nowrap;
+        color: #a39eb8;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        margin-right: 4px;
       }
 
-      #bpm-value {
+      /* Entrada numérica de BPM */
+      #bpm-input {
+        background: rgba(0, 0, 0, 0.35);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        color: #f1eff7;
+        width: 52px;
+        height: 28px;
+        text-align: center;
         font-weight: 700;
-        color: #b89663; /* Color ochre para destacar el valor */
-        display: inline-block;
-        width: 24px;
-        text-align: right;
+        font-size: 14px;
+        border-radius: 8px;
+        outline: none;
+        transition: all 0.2s ease;
+        font-family: 'Outfit', sans-serif;
       }
 
+      #bpm-input:focus {
+        border-color: #007aff;
+        box-shadow: 0 0 8px rgba(0, 122, 255, 0.3);
+        background: rgba(0, 0, 0, 0.5);
+      }
+
+      /* Quitar flechitas por defecto de input number */
+      #bpm-input::-webkit-outer-spin-button,
+      #bpm-input::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+      }
+      #bpm-input {
+        -moz-appearance: textfield;
+      }
+
+      /* Botones de ajuste fino (+/-) */
+      .bpm-btn {
+        width: 28px;
+        height: 28px;
+        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        color: #d1cedb;
+        border-radius: 8px;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s ease;
+        outline: none;
+      }
+
+      .bpm-btn:hover {
+        background: rgba(255, 255, 255, 0.12);
+        color: #ffffff;
+        border-color: rgba(255, 255, 255, 0.2);
+        transform: translateY(-1px);
+      }
+
+      .bpm-btn:active {
+        transform: translateY(0);
+        background: rgba(255, 255, 255, 0.04);
+      }
+
+      /* Slider de BPM */
       #bpm-slider {
         -webkit-appearance: none;
         appearance: none;
-        width: 100px;
-        height: 4px;
-        background: #dfdad4;
-        border-radius: 2px;
+        width: 120px;
+        height: 6px;
+        background: rgba(255, 255, 255, 0.08);
+        border-radius: 3px;
         outline: none;
-        transition: background 0.3s;
+        position: relative;
+        transition: all 0.2s;
+        border: 1px solid rgba(0, 0, 0, 0.2);
       }
 
       #bpm-slider::-webkit-slider-thumb {
         -webkit-appearance: none;
         appearance: none;
-        width: 12px;
-        height: 12px;
+        width: 14px;
+        height: 14px;
         border-radius: 50%;
-        background: #b89663;
+        background: linear-gradient(135deg, #007aff 0%, #0056b3 100%);
         cursor: pointer;
-        transition: transform 0.1s ease;
+        box-shadow: 0 0 10px rgba(0, 122, 255, 0.6);
+        transition: transform 0.15s ease, background 0.15s;
+        border: 1.5px solid rgba(255, 255, 255, 0.85);
       }
 
       #bpm-slider::-webkit-slider-thumb:hover {
-        transform: scale(1.2);
+        transform: scale(1.25);
+        background: linear-gradient(135deg, #008aff 0%, #0066d3 100%);
       }
 
-      /* Botón de control del metrónomo */
-      .control-btn {
-        background: none;
-        border: none;
+      /* Botón del metrónomo */
+      #metronome-toggle {
+        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 8px;
         font-size: 14px;
         cursor: pointer;
-        padding: 4px 8px;
-        border-radius: 4px;
-        color: #706c68;
+        padding: 5px 10px;
+        color: #a39eb8;
         transition: all 0.2s ease;
         display: flex;
         align-items: center;
         justify-content: center;
+        outline: none;
       }
 
-      .control-btn:hover {
-        background: #dfdad4;
-        color: #3b3836;
+      #metronome-toggle:hover {
+        background: rgba(255, 255, 255, 0.12);
+        color: #ffffff;
       }
 
-      .control-btn.active {
-        color: #5c7566; /* Verde musgo cuando está activo */
-        background: #e8efe9;
+      #metronome-toggle.active {
+        color: #4cd964;
+        background: rgba(76, 217, 100, 0.12);
+        border-color: rgba(76, 217, 100, 0.35);
+        box-shadow: 0 0 10px rgba(76, 217, 100, 0.15);
       }
 
-      /* Canvas container minimalista */
+      /* Contenedor del Juego */
       #game-container {
         position: relative;
-        border: 1px solid #e3ded9;
+        border: 1px solid rgba(255, 255, 255, 0.08);
         box-shadow:
-          0 10px 30px rgba(0, 0, 0, 0.04),
-          0 1px 8px rgba(0, 0, 0, 0.02);
-        border-radius: 6px;
+          0 20px 50px rgba(0, 0, 0, 0.5),
+          0 1px 3px rgba(255, 255, 255, 0.05);
+        border-radius: 12px;
         overflow: hidden;
+        background: #08070d;
       }
 
       #game-container canvas {
         display: block;
       }
 
-      /* Footer / instrucciones */
+      /* Footer / Consejos */
       #footer {
         display: flex;
         gap: 32px;
         width: 800px;
         justify-content: center;
-        margin-top: 4px;
+        padding: 0 4px;
       }
 
       .hint {
-        font-size: 11px;
-        color: #8c8680;
-        letter-spacing: 0.5px;
+        font-size: 12px;
+        color: #89869c;
         font-weight: 400;
+        letter-spacing: 0.2px;
       }
 
       .hint span {
-        color: #5c7566; /* Verde musgo suave para destacar */
+        color: #ff2d55;
         font-weight: 600;
       }
 
-      /* Mic status badge minimalista */
+      .hint.mic-hint span {
+        color: #007aff;
+      }
+
+      /* Estado del Micrófono (Glassmorphism) */
       #mic-status {
         position: fixed;
-        bottom: 20px;
-        right: 20px;
+        bottom: 24px;
+        right: 24px;
         padding: 8px 16px;
-        border: 1px solid #dfdad4;
+        border: 1px solid rgba(255, 255, 255, 0.08);
         border-radius: 20px;
         font-size: 11px;
-        font-weight: 500;
-        color: #706c68;
-        letter-spacing: 0.5px;
-        background: #ebe8e4;
+        font-weight: 600;
+        color: #a39eb8;
+        letter-spacing: 1px;
+        background: rgba(25, 23, 38, 0.65);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
         z-index: 100;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
         transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
       }
 
       #mic-status.active {
-        border-color: #d1dfd4;
-        color: #4a5c4e;
-        background: #e8efe9;
-        box-shadow: 0 4px 12px rgba(74, 92, 78, 0.05);
+        border-color: rgba(76, 217, 100, 0.25);
+        color: #4cd964;
+        background: rgba(76, 217, 100, 0.08);
+        box-shadow: 0 4px 20px rgba(76, 217, 100, 0.1);
       }
 
       #mic-status .dot {
@@ -203,25 +307,31 @@
         border-radius: 50%;
         background: currentColor;
         margin-right: 8px;
-        vertical-align: middle;
-        animation: pulse 2s infinite;
+        animation: pulse 1.8s infinite;
       }
 
       @keyframes pulse {
-        0%, 100% { opacity: 1; }
-        50% { opacity: 0.4; }
+        0%, 100% { opacity: 1; transform: scale(1); }
+        50% { opacity: 0.3; transform: scale(1.1); }
       }
     </style>
   </head>
   <body>
+    <div class="ambient-glow"></div>
+
     <div id="game-wrapper">
       <div id="header">
-        <div>
+        <div id="brand">
           <div id="title">🎸 Chord Strike</div>
-          <div id="subtitle">Destroy the notes — feel the beat</div>
+          <div id="subtitle">Destruye los acordes y notas tocando a tempo</div>
         </div>
-        <div id="bpm-control">
-          <span class="bpm-label">BPM: <span id="bpm-value">60</span></span>
+        <div id="bpm-panel">
+          <div class="control-group">
+            <span class="bpm-label">BPM</span>
+            <button id="bpm-minus" class="bpm-btn" title="Reducir 1 BPM">-</button>
+            <input type="number" id="bpm-input" min="10" max="250" value="60" />
+            <button id="bpm-plus" class="bpm-btn" title="Aumentar 1 BPM">+</button>
+          </div>
           <input type="range" id="bpm-slider" min="10" max="250" value="60" />
           <button id="metronome-toggle" class="control-btn" title="Activar metrónomo">🔇</button>
         </div>
@@ -232,14 +342,14 @@
       </div>
 
       <div id="footer">
-        <div class="hint"><span>CLICK</span> sobre las notas para destruirlas</div>
-        <div class="hint">Las notas caen — no dejes que lleguen abajo</div>
-        <div class="hint"><span>MIC</span> integrado — toca para destruir notas</div>
+        <div class="hint"><span>CLICK</span> para destruir manualmente</div>
+        <div class="hint">Las notas caen — no dejes que superen el límite</div>
+        <div class="hint mic-hint"><span>MICRÓFONO</span> integrado — toca las notas para golpear</div>
       </div>
     </div>
 
     <div id="mic-status">
-      <span class="dot"></span>MIC STANDBY
+      <span class="dot"></span>MICRO EN ESPERA
     </div>
 
     <script type="module" src="/src/main.ts"></script>
