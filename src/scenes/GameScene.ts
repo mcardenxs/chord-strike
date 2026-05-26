@@ -78,15 +78,25 @@ export default class GameScene extends Phaser.Scene {
   private bpm: number = 60            // Ritmo de Beats Per Minute
   private spawnIntervalMs: number = 1000 // Frecuencia de aparición de notas
   private isMetronomeActive: boolean = false // Si el click de metrónomo debe sonar
+  private lanes: number[] = []        // Carriles calculados dinámicamente
+  private currentTheme: string = 'dark' // Tema actual ('light' o 'dark')
 
   // — Grupos de objetos —
   private notesGroup!: Phaser.GameObjects.Group
 
   // — UI Elements (texto) —
+  private scoreLabel!: Phaser.GameObjects.Text
   private scoreText!: Phaser.GameObjects.Text
+  private hpLabel!: Phaser.GameObjects.Text
   private hpText!: Phaser.GameObjects.Text
+  private comboLabel!: Phaser.GameObjects.Text
   private comboText!: Phaser.GameObjects.Text
   private gameOverContainer!: Phaser.GameObjects.Container
+  private dangerText!: Phaser.GameObjects.Text
+
+  // — Gráficos —
+  private bgGraphics!: Phaser.GameObjects.Graphics
+  private dangerLineGraphics!: Phaser.GameObjects.Graphics
 
   constructor() {
     super({ key: 'GameScene' })
@@ -112,6 +122,24 @@ export default class GameScene extends Phaser.Scene {
     this.isGameOver = false
     this.combo = 0
     this.spawnTimer = 0
+
+    // Resetear referencias a objetos de Phaser que son destruidos al reiniciar la escena
+    this.bgGraphics = undefined as any
+    this.dangerLineGraphics = undefined as any
+    this.scoreLabel = undefined as any
+    this.scoreText = undefined as any
+    this.hpLabel = undefined as any
+    this.hpText = undefined as any
+    this.comboLabel = undefined as any
+    this.comboText = undefined as any
+    this.gameOverContainer = undefined as any
+    this.dangerText = undefined as any
+
+    // Obtener tema inicial
+    this.currentTheme = document.body.classList.contains('light-theme') ? 'light' : 'dark'
+
+    // Calcular carriles dinámicamente según el ancho real disponible
+    this.calculateLanes(width)
 
     // Leer el valor inicial del slider del DOM para el BPM
     const bpmSlider = document.getElementById('bpm-slider') as HTMLInputElement
@@ -156,12 +184,20 @@ export default class GameScene extends Phaser.Scene {
     // ── Escuchar cambios del metrónomo ──
     this.game.events.on('metronome-toggled', this.handleMetronomeToggled, this)
 
+    // ── Escuchar cambios de tema ──
+    this.game.events.on('theme-changed', this.handleThemeChanged, this)
+
+    // ── Escuchar cambio de tamaño de pantalla ──
+    this.scale.on('resize', this.handleResize, this)
+
     // Apagar la escucha al reiniciar o cerrar la escena para evitar duplicación
     this.events.once('shutdown', () => {
       this.game.events.off('note-detected', this.handleNoteDetected, this)
       this.game.events.off('chord-detected', this.handleChordDetected, this)
       this.game.events.off('bpm-changed', this.handleBpmChanged, this)
       this.game.events.off('metronome-toggled', this.handleMetronomeToggled, this)
+      this.game.events.off('theme-changed', this.handleThemeChanged, this)
+      this.scale.off('resize', this.handleResize, this)
     })
 
     console.log('🎮 GameScene lista — ¡a destruir notas!')
@@ -199,43 +235,68 @@ export default class GameScene extends Phaser.Scene {
   // MÉTODOS PRIVADOS
   // ─────────────────────────────────────────
 
-  /** Fondo oscuro de piano roll con rejilla de carriles */
+  /** Fondo oscuro/claro de piano roll con rejilla de carriles y pentagrama */
   private createBackground(w: number, h: number): void {
-    const bg = this.add.graphics()
-    // Fondo oscuro profundo
-    bg.fillStyle(0x08070d, 1)
-    bg.fillRect(0, 0, w, h)
+    if (!this.bgGraphics) {
+      this.bgGraphics = this.add.graphics()
+    }
+    this.bgGraphics.clear()
 
-    // Rejilla de piano roll sutil
-    bg.lineStyle(1, 0x1a1829, 0.4)
-    
-    // Líneas horizontales de tiempo
+    const isLight = this.currentTheme === 'light'
+    const bgColor = isLight ? 0xf5f2eb : 0x08070d
+    const gridColor = isLight ? 0x08070d : 0x1a1829
+    const gridAlpha = isLight ? 0.05 : 0.4
+    const staveColor = isLight ? 0xb0a896 : 0x4a3b63
+    const staveAlpha = isLight ? 0.5 : 0.6
+
+    // Fondo principal
+    this.bgGraphics.fillStyle(bgColor, 1)
+    this.bgGraphics.fillRect(0, 0, w, h)
+
+    // Rejilla de piano roll sutil (líneas horizontales de tiempo)
+    this.bgGraphics.lineStyle(1, gridColor, gridAlpha)
     for (let y = 0; y < h; y += 60) {
-      bg.lineBetween(0, y, w, y)
+      this.bgGraphics.lineBetween(0, y, w, y)
     }
 
     // Líneas verticales de carriles
-    LANES.forEach(laneX => {
-      bg.lineBetween(laneX, 0, laneX, h)
+    this.lanes.forEach(laneX => {
+      this.bgGraphics.lineBetween(laneX, 0, laneX, h)
     })
+
+    // ── DIBUJAR PENTAGRAMA (5 líneas horizontales) ──
+    // Se colocan en el centro vertical de la pantalla con un espaciado de 24px
+    const centerY = h / 2
+    this.bgGraphics.lineStyle(1.5, staveColor, staveAlpha)
+    for (let i = -2; i <= 2; i++) {
+      const staveY = centerY + i * 24
+      this.bgGraphics.lineBetween(40, staveY, w - 40, staveY)
+    }
   }
 
   /** Línea de peligro sutil en la parte inferior */
   private createDangerLine(w: number, h: number): void {
     const dangerY = h - 50
-    const line = this.add.graphics()
+    if (!this.dangerLineGraphics) {
+      this.dangerLineGraphics = this.add.graphics()
+    }
+    this.dangerLineGraphics.clear()
 
     // Línea de límite roja/rosa vibrante
-    line.lineStyle(1.5, 0xff2d55, 0.6)
-    line.lineBetween(40, dangerY, w - 40, dangerY)
+    this.dangerLineGraphics.lineStyle(1.5, 0xff2d55, 0.6)
+    this.dangerLineGraphics.lineBetween(40, dangerY, w - 40, dangerY)
 
     // Texto "LÍMITE"
-    this.add.text(w / 2, dangerY - 14, '— LÍMITE —', {
-      fontFamily: "'Outfit', sans-serif",
-      fontSize: '10px',
-      color: 'rgba(255, 45, 85, 0.7)',
-      letterSpacing: 2
-    }).setOrigin(0.5)
+    if (!this.dangerText) {
+      this.dangerText = this.add.text(w / 2, dangerY - 14, '— LÍMITE —', {
+        fontFamily: "'Outfit', sans-serif",
+        fontSize: '10px',
+        color: 'rgba(255, 45, 85, 0.7)',
+        letterSpacing: 2
+      }).setOrigin(0.5)
+    } else {
+      this.dangerText.setPosition(w / 2, dangerY - 14)
+    }
   }
 
   /** Crea la textura de partícula como un pequeño círculo */
@@ -249,30 +310,34 @@ export default class GameScene extends Phaser.Scene {
 
   /** UI superior: score, HP y combo */
   private createUI(w: number): void {
+    const isLight = this.currentTheme === 'light'
+    const textColor = isLight ? '#08070d' : '#ffffff'
+    const labelColor = isLight ? 'rgba(8, 7, 13, 0.6)' : 'rgba(163, 158, 184, 0.7)'
+
     const panelStyle = {
       fontFamily: "'Outfit', sans-serif",
       fontSize: '14px',
-      color: '#ffffff',
+      color: textColor,
       fontStyle: '600',
     }
 
     const labelStyle = {
       fontFamily: "'Outfit', sans-serif",
       fontSize: '10px',
-      color: 'rgba(163, 158, 184, 0.7)',
+      color: labelColor,
       letterSpacing: 1.5,
       fontStyle: '600',
     }
 
     // — Score —
-    this.add.text(24, 16, 'PUNTOS', labelStyle)
+    this.scoreLabel = this.add.text(24, 16, 'PUNTOS', labelStyle)
     this.scoreText = this.add.text(24, 30, '000000', {
       ...panelStyle,
       fontSize: '22px',
     })
 
     // — HP —
-    this.add.text(w / 2, 16, 'ESCUDO', labelStyle).setOrigin(0.5, 0)
+    this.hpLabel = this.add.text(w / 2, 16, 'ESCUDO', labelStyle).setOrigin(0.5, 0)
     this.hpText = this.add.text(w / 2, 30, this.buildHpString(), {
       ...panelStyle,
       fontSize: '18px',
@@ -280,7 +345,7 @@ export default class GameScene extends Phaser.Scene {
     }).setOrigin(0.5, 0)
 
     // — Combo —
-    this.add.text(w - 24, 16, 'COMBO', labelStyle).setOrigin(1, 0)
+    this.comboLabel = this.add.text(w - 24, 16, 'COMBO', labelStyle).setOrigin(1, 0)
     this.comboText = this.add.text(w - 24, 30, 'x1', {
       ...panelStyle,
       fontSize: '22px',
@@ -345,6 +410,12 @@ export default class GameScene extends Phaser.Scene {
     let container: Phaser.GameObjects.Container
     const circle = this.add.graphics()
 
+    const isLight = this.currentTheme === 'light'
+    const fillAlpha = isLight ? 0.65 : 0.35
+    const labelColor = isLight ? '#08070d' : '#ffffff'
+    const detailColor = isLight ? 'rgba(8, 7, 13, 0.8)' : 'rgba(255, 255, 255, 0.75)'
+    const symbolColor = isLight ? 'rgba(8, 7, 13, 0.5)' : 'rgba(255, 255, 255, 0.5)'
+
     if (spawnChord) {
       // ──────────────────────────────────────────
       // SPAWN DE ACORDE (Do, Rem, Mim, Fa, Sol, Lam)
@@ -352,7 +423,7 @@ export default class GameScene extends Phaser.Scene {
       const chord = CHORD_TYPES[Phaser.Math.Between(0, CHORD_TYPES.length - 1)]
 
       // Círculo principal relleno translúcido más opaco para contraste
-      circle.fillStyle(chord.color, 0.35)
+      circle.fillStyle(chord.color, fillAlpha)
       circle.fillCircle(0, 0, CHORD_RADIUS)
 
       // Doble borde elegante (estética musical para acordes)
@@ -361,21 +432,21 @@ export default class GameScene extends Phaser.Scene {
       circle.lineStyle(1.2, chord.color, 0.5)
       circle.strokeCircle(0, 0, CHORD_RADIUS - 4)
 
-      // Texto del nombre del acorde (ej: "Lam") en color blanco
+      // Texto del nombre del acorde (ej: "Lam")
       const label = this.add.text(0, -9, chord.name, {
         fontFamily: "'Outfit', sans-serif",
         fontSize: '14px',
         fontStyle: '700',
-        color: '#ffffff',
+        color: labelColor,
         align: 'center',
       }).setOrigin(0.5)
 
-      // Lista de notas requeridas (ej: "La  Do  Mi") en color blanco suave
+      // Lista de notas requeridas (ej: "La  Do  Mi")
       const notesLabel = this.add.text(0, 10, chord.notes.join('  '), {
         fontFamily: "'Outfit', sans-serif",
         fontSize: '10px',
         fontStyle: '600',
-        color: 'rgba(255, 255, 255, 0.75)',
+        color: detailColor,
         align: 'center',
       }).setOrigin(0.5)
 
@@ -402,19 +473,19 @@ export default class GameScene extends Phaser.Scene {
       const fullName = `${type.name}${octave}`
 
       // Círculo principal relleno translúcido más opaco para contraste
-      circle.fillStyle(type.color, 0.35)
+      circle.fillStyle(type.color, fillAlpha)
       circle.fillCircle(0, 0, NOTE_RADIUS)
 
       // Borde elegante
       circle.lineStyle(2, type.color, 0.9)
       circle.strokeCircle(0, 0, NOTE_RADIUS)
 
-      // Texto de la nota en color blanco
+      // Texto de la nota
       const label = this.add.text(0, -3, fullName, {
         fontFamily: "'Outfit', sans-serif",
         fontSize: '13px',
         fontStyle: '600',
-        color: '#ffffff',
+        color: labelColor,
         align: 'center',
       }).setOrigin(0.5)
 
@@ -422,8 +493,8 @@ export default class GameScene extends Phaser.Scene {
       const symbol = this.add.text(0, 11, '♩', {
         fontFamily: "'Outfit', sans-serif",
         fontSize: '11px',
-        color: 'rgba(255, 255, 255, 0.5)',
-      }).setOrigin(0.5).setAlpha(0.5)
+        color: symbolColor,
+      }).setOrigin(0.5).setAlpha(isLight ? 0.7 : 0.5)
 
       // Agrupar en contenedor
       container = this.add.container(x, y, [circle, label, symbol])
@@ -695,38 +766,51 @@ export default class GameScene extends Phaser.Scene {
     })
   }
 
-  /** Crea el overlay de Game Over (oculto al inicio) */
+  /** Crea el overlay de Game Over (adaptable al tema claro/oscuro) */
   private createGameOverScreen(w: number, h: number): void {
-    // Fondo semitransparente color oscuro profundo
+    const isLight = this.currentTheme === 'light'
+    const overlayColor = isLight ? 0xf5f2eb : 0x08070d
+    const textColor = isLight ? '#08070d' : '#ffffff'
+    const buttonBgColor = isLight ? 0xe5e0d8 : 0x1a1829
+    const buttonHoverBgColor = isLight ? 0xd5cfc4 : 0x2d2b3e
+
+    const wasVisible = this.gameOverContainer ? this.gameOverContainer.visible : false
+    const oldAlpha = this.gameOverContainer ? this.gameOverContainer.alpha : 0
+
+    if (this.gameOverContainer) {
+      this.gameOverContainer.destroy()
+    }
+
+    // Fondo semitransparente
     const overlay = this.add.graphics()
-    overlay.fillStyle(0x08070d, 0.92)
+    overlay.fillStyle(overlayColor, 0.95)
     overlay.fillRect(-w / 2, -h / 2, w, h)
 
-    // Título en blanco
+    // Título en color de tema
     const title = this.add.text(0, -60, 'Juego Terminado', {
       fontFamily: "'Outfit', sans-serif",
       fontSize: '36px',
       fontStyle: '600',
-      color: '#ffffff',
+      color: textColor,
     }).setOrigin(0.5)
 
     // Score final en color amarillo vibrante
-    const scoreDisplay = this.add.text(0, -10, 'PUNTOS: 000000', {
+    const scoreDisplay = this.add.text(0, -10, `PUNTOS: ${this.score.toString().padStart(6, '0')}`, {
       fontFamily: "'Outfit', sans-serif",
       fontSize: '18px',
       color: '#ffcc00',
     }).setOrigin(0.5)
 
-    // Botón de reinicio (píldora oscura moderna)
+    // Botón de reinicio (píldora adaptable a tema)
     const btnBg = this.add.graphics()
-    btnBg.fillStyle(0x1a1829, 1)
+    btnBg.fillStyle(buttonBgColor, 1)
     btnBg.fillRoundedRect(-80, 40, 160, 44, 22)
 
     const btnText = this.add.text(0, 62, 'JUGAR DE NUEVO', {
       fontFamily: "'Outfit', sans-serif",
       fontSize: '12px',
       fontStyle: '600',
-      color: '#ffffff',
+      color: textColor,
       letterSpacing: 1
     }).setOrigin(0.5)
 
@@ -737,18 +821,17 @@ export default class GameScene extends Phaser.Scene {
 
     hitArea.on('pointerover', () => {
       btnBg.clear()
-      btnBg.fillStyle(0x2d2b3e, 1) // Tono un poco más claro al hacer hover
+      btnBg.fillStyle(buttonHoverBgColor, 1)
       btnBg.fillRoundedRect(-80, 40, 160, 44, 22)
     })
 
     hitArea.on('pointerout', () => {
       btnBg.clear()
-      btnBg.fillStyle(0x1a1829, 1)
+      btnBg.fillStyle(buttonBgColor, 1)
       btnBg.fillRoundedRect(-80, 40, 160, 44, 22)
     })
 
     hitArea.on('pointerdown', () => {
-      // Reiniciar la escena
       this.scene.restart()
     })
 
@@ -756,8 +839,78 @@ export default class GameScene extends Phaser.Scene {
       overlay, title, scoreDisplay, btnBg, btnText, hitArea
     ])
 
-    this.gameOverContainer.setVisible(false)
-    this.gameOverContainer.setAlpha(0)
+    this.gameOverContainer.setVisible(wasVisible)
+    this.gameOverContainer.setAlpha(oldAlpha)
+  }
+
+  /** Actualiza dinámicamente los colores de los textos de la UI según el tema */
+  private updateUIColors(): void {
+    const isLight = this.currentTheme === 'light'
+    const textColor = isLight ? '#08070d' : '#ffffff'
+    const labelColor = isLight ? 'rgba(8, 7, 13, 0.6)' : 'rgba(163, 158, 184, 0.7)'
+
+    if (this.scoreLabel) this.scoreLabel.setColor(labelColor)
+    if (this.scoreText) this.scoreText.setColor(textColor)
+    if (this.hpLabel) this.hpLabel.setColor(labelColor)
+    if (this.comboLabel) this.comboLabel.setColor(labelColor)
+  }
+
+  /** Maneja el cambio de tema en vivo */
+  private handleThemeChanged(theme: string): void {
+    this.currentTheme = theme
+    const { width, height } = this.scale
+
+    // Redibujar el fondo con la rejilla y el pentagrama
+    this.createBackground(width, height)
+
+    // Redibujar la línea de peligro
+    this.createDangerLine(width, height)
+
+    // Actualizar colores de los textos
+    this.updateUIColors()
+
+    // Recrear la pantalla de Game Over
+    this.createGameOverScreen(width, height)
+
+    // Actualizar todas las burbujas activas en la escena
+    this.notesGroup.getChildren().forEach((obj) => {
+      const container = obj as Phaser.GameObjects.Container
+      const noteType = container.getData('noteType') as string
+      const isLight = theme === 'light'
+      const textColor = isLight ? '#08070d' : '#ffffff'
+      const subtextColor = isLight ? 'rgba(8, 7, 13, 0.8)' : 'rgba(255, 255, 255, 0.75)'
+      const symbolColor = isLight ? 'rgba(8, 7, 13, 0.5)' : 'rgba(255, 255, 255, 0.5)'
+      const fillAlpha = isLight ? 0.65 : 0.35
+
+      container.list.forEach((child) => {
+        if (child instanceof Phaser.GameObjects.Text) {
+          if (child.y === -9 || child.y === -3) {
+            child.setColor(textColor)
+          } else if (child.y === 10) {
+            child.setColor(subtextColor)
+          } else if (child.y === 11) {
+            child.setColor(symbolColor)
+          }
+        } else if (child instanceof Phaser.GameObjects.Graphics) {
+          child.clear()
+          if (noteType === 'chord') {
+            const chord = container.getData('chordData') as ChordData
+            child.fillStyle(chord.color, fillAlpha)
+            child.fillCircle(0, 0, CHORD_RADIUS)
+            child.lineStyle(2, chord.color, 0.9)
+            child.strokeCircle(0, 0, CHORD_RADIUS)
+            child.lineStyle(1.2, chord.color, 0.5)
+            child.strokeCircle(0, 0, CHORD_RADIUS - 4)
+          } else {
+            const type = container.getData('type') as NoteData
+            child.fillStyle(type.color, fillAlpha)
+            child.fillCircle(0, 0, NOTE_RADIUS)
+            child.lineStyle(2, type.color, 0.9)
+            child.strokeCircle(0, 0, NOTE_RADIUS)
+          }
+        }
+      })
+    })
   }
 
   /** Maneja el evento de nota detectada por el micrófono */
@@ -858,5 +1011,23 @@ export default class GameScene extends Phaser.Scene {
 
     osc.start(now)
     osc.stop(now + 0.05)
+  }
+
+  /** Calcula la posición X de los carriles basándose en el ancho actual del canvas */
+  private calculateLanes(w: number): void {
+    const margin = 80
+    const availableWidth = w - margin * 2
+    const numLanes = 6
+    const spacing = availableWidth / (numLanes - 1)
+
+    this.lanes = []
+    for (let i = 0; i < numLanes; i++) {
+      this.lanes.push(margin + i * spacing)
+    }
+  }
+
+  /** Maneja el cambio de tamaño del canvas para recalcular carriles */
+  private handleResize(gameSize: Phaser.Structs.Size): void {
+    this.calculateLanes(gameSize.width)
   }
 }

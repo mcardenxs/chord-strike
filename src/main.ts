@@ -18,15 +18,15 @@ import { ChordDetectorService } from './audio/chordDetector'
 
 const config: Phaser.Types.Core.GameConfig = {
   type: Phaser.AUTO,           // Usa WebGL si está disponible, fallback a Canvas
-  width: 800,
-  height: 560,
-  backgroundColor: '#050510',
+  width: '100%',
+  height: '100%',
+  backgroundColor: '#08070d',
   parent: 'game-container',    // Monta el canvas dentro de este div del HTML
   scene: [GameScene],
 
   // Escala responsiva
   scale: {
-    mode: Phaser.Scale.FIT,
+    mode: Phaser.Scale.RESIZE,
     autoCenter: Phaser.Scale.CENTER_BOTH,
   },
 
@@ -136,15 +136,35 @@ const chordDetector = new ChordDetectorService()
 
 // Intentar iniciar el micrófono con el click de interacción
 window.addEventListener('click', async () => {
+  const micStatus = document.getElementById('mic-status')
+  if (micStatus) {
+    micStatus.classList.add('active')
+    micStatus.innerHTML = '<span class="dot"></span>MIC ESCUCHANDO'
+  }
+
   if (!pitchDetector.running) {
     await pitchDetector.start((result) => {
       // Emitir el evento de nota detectada al juego de Phaser
       game.events.emit('note-detected', result.note)
 
-      // Logear en consola la nota detectada
-      console.log(
-        `🎵 Nota detectada: ${result.note} | ${result.frequency.toFixed(1)} Hz | claridad: ${(result.clarity * 100).toFixed(0)}%`
-      )
+      // ── Actualizar Afinador Digital ──
+      const tunerNote = document.getElementById('tuner-note')
+      const tunerHz = document.getElementById('tuner-hz')
+      const tunerNeedle = document.getElementById('tuner-needle')
+
+      if (tunerNote) tunerNote.textContent = result.note
+      if (tunerHz) tunerHz.textContent = `${result.frequency.toFixed(1)} Hz`
+      
+      if (tunerNeedle) {
+        // Calcular la desviación en cents respecto al tono ideal
+        const midiNote = Math.round(12 * Math.log2(result.frequency / 440) + 69)
+        const idealHz = 440 * Math.pow(2, (midiNote - 69) / 12)
+        const centsDeviation = 1200 * Math.log2(result.frequency / idealHz)
+        
+        // Mapear desviación de -50 cents a 50 cents hacia el rango de 0% a 100% de la aguja
+        const percent = 50 + (centsDeviation / 50) * 50
+        tunerNeedle.style.left = `${Math.max(0, Math.min(100, percent))}%`
+      }
     })
   }
 
@@ -156,6 +176,46 @@ window.addEventListener('click', async () => {
     })
   }
 }, { once: true })
+
+// ──────────────────────────────────────────
+// Sincronizar alternancia de Modo Claro/Oscuro
+// ──────────────────────────────────────────
+const themeToggle = document.getElementById('theme-toggle') as HTMLButtonElement
+
+// Leer tema guardado o usar default
+let currentTheme = localStorage.getItem('theme') || 'dark'
+if (currentTheme === 'light') {
+  document.body.classList.add('light-theme')
+  if (themeToggle) {
+    themeToggle.textContent = '☀️'
+    themeToggle.title = 'Activar modo oscuro'
+  }
+} else {
+  document.body.classList.remove('light-theme')
+  if (themeToggle) {
+    themeToggle.textContent = '🌙'
+    themeToggle.title = 'Activar modo claro'
+  }
+}
+
+if (themeToggle) {
+  themeToggle.addEventListener('click', () => {
+    if (document.body.classList.contains('light-theme')) {
+      document.body.classList.remove('light-theme')
+      currentTheme = 'dark'
+      themeToggle.textContent = '🌙'
+      themeToggle.title = 'Activar modo claro'
+    } else {
+      document.body.classList.add('light-theme')
+      currentTheme = 'light'
+      themeToggle.textContent = '☀️'
+      themeToggle.title = 'Activar modo oscuro'
+    }
+    localStorage.setItem('theme', currentTheme)
+    // Emitir el cambio de tema a las escenas de Phaser
+    game.events.emit('theme-changed', currentTheme)
+  })
+}
 
 // ──────────────────────────────────────────
 // Limpiar al cerrar la página
