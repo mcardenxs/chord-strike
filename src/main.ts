@@ -20,7 +20,7 @@ const config: Phaser.Types.Core.GameConfig = {
   type: Phaser.AUTO,           // Usa WebGL si está disponible, fallback a Canvas
   width: '100%',
   height: '100%',
-  backgroundColor: '#08070d',
+  backgroundColor: '#0a0a12',
   parent: 'game-container',    // Monta el canvas dentro de este div del HTML
   scene: [GameScene],
 
@@ -161,9 +161,9 @@ window.addEventListener('click', async () => {
         const idealHz = 440 * Math.pow(2, (midiNote - 69) / 12)
         const centsDeviation = 1200 * Math.log2(result.frequency / idealHz)
         
-        // Mapear desviación de -50 cents a 50 cents hacia el rango de 0% a 100% de la aguja
-        const percent = 50 + (centsDeviation / 50) * 50
-        tunerNeedle.style.left = `${Math.max(0, Math.min(100, percent))}%`
+        // Rotación de -45 a +45 grados en el medidor radial
+        const deg = Math.max(-45, Math.min(45, (centsDeviation / 50) * 45))
+        tunerNeedle.style.transform = `rotate(${deg}deg)`
       }
     })
   }
@@ -176,6 +176,36 @@ window.addEventListener('click', async () => {
     })
   }
 }, { once: true })
+
+// ──────────────────────────────────────────
+// Sincronizar alternancia de Cifrado (Do/Re/Mi vs C/D/E)
+// ──────────────────────────────────────────
+const notationToggle = document.getElementById('notation-toggle') as HTMLButtonElement
+let currentNotation: 'latin' | 'american' = (localStorage.getItem('notation') as 'latin' | 'american') || 'latin'
+
+function applyNotation(notation: 'latin' | 'american') {
+  currentNotation = notation
+  localStorage.setItem('notation', notation)
+  
+  PitchDetectorService.setNotation(notation)
+  ChordDetectorService.setNotation(notation)
+  
+  if (notationToggle) {
+    notationToggle.innerHTML = `CIFRADO: <span class="notation-active">${notation === 'latin' ? 'DO RE MI' : 'C D E'}</span>`
+  }
+  
+  game.events.emit('notation-changed', notation)
+}
+
+// Inicializar al arrancar
+applyNotation(currentNotation);
+
+if (notationToggle) {
+  notationToggle.addEventListener('click', () => {
+    const nextNotation = currentNotation === 'latin' ? 'american' : 'latin'
+    applyNotation(nextNotation)
+  })
+}
 
 // ──────────────────────────────────────────
 // Sincronizar alternancia de Modo Claro/Oscuro

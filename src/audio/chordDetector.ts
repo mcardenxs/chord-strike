@@ -2,25 +2,123 @@
  * chordDetector.ts
  * ─────────────────────────────────────────────────────────────
  * Módulo de detección de acordes polifónicos en tiempo real.
- * Extrae el Chromagram de la señal de audio y lo compara con
- * plantillas de acordes diatónicos.
+ * Extrae un Chromagram de 12 bins de la señal de audio,
+ * aplica supresión de armónicos, identifica las notas activas
+ * y usa Tonal.js para reconocer el acorde resultante.
  * ─────────────────────────────────────────────────────────────
  */
 
-// Plantillas binarias de los acordes: 1 significa que la nota debe estar presente, 0 que no.
-const CHORD_TEMPLATES: { [key: string]: number[] } = {
-  // Índices: Do=0, Do#=1, Re=2, Re#=3, Mi=4, Fa=5, Fa#=6, Sol=7, Sol#=8, La=9, La#=10, Si=11
-  'Do':  [1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0], // Do, Mi, Sol
-  'Rem': [0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0], // Re, Fa, La
-  'Mim': [0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1], // Mi, Sol, Si
-  'Fa':  [1, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0], // Fa, La, Do
-  'Sol': [0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 1], // Sol, Si, Re
-  'Lam': [1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0], // La, Do, Mi
+import { Chord } from 'tonal'
+
+// ─── Etiquetas cromáticas ────────────────────────────────────
+
+/** Etiquetas de las 12 clases de pitch en notación americana */
+export const CHROMA_LABELS_EN = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'] as const
+
+/** Etiquetas de las 12 clases de pitch en notación latina */
+export const CHROMA_LABELS_ES = ['Do', 'Do#', 'Re', 'Re#', 'Mi', 'Fa', 'Fa#', 'Sol', 'Sol#', 'La', 'La#', 'Si'] as const
+
+// ─── Constantes del algoritmo ────────────────────────────────
+
+/** Tamaño de la FFT — 8192 para buena resolución en graves */
+const FFT_SIZE = 8192
+
+/** Suavizado espectral del AnalyserNode */
+const SMOOTHING = 0.8
+
+/** Frecuencia mínima a considerar (C2 ≈ 65 Hz) */
+const MIN_FREQ = 65
+
+/** Frecuencia máxima a considerar */
+const MAX_FREQ = 2000
+
+/** Piso de ruido en dB — bins por debajo se ignoran */
+const NOISE_FLOOR_DB = -60
+
+/** Umbral adaptativo: energía normalizada mínima para considerar una nota activa */
+const ACTIVE_NOTE_THRESHOLD = 0.30
+
+/** Mínimo de notas activas para intentar detección de acorde */
+const MIN_ACTIVE_NOTES = 2
+
+/** Tamaño del historial de detecciones para suavizado temporal */
+const HISTORY_SIZE = 8
+
+/** Votos mínimos necesarios para emitir un acorde (de HISTORY_SIZE frames) */
+const MIN_VOTES = 4
+
+// ─── Mapa de traducción americano → latino ───────────────────
+
+const EN_TO_LATIN: Record<string, string> = {
+  C: 'Do',
+  D: 'Re',
+  E: 'Mi',
+  F: 'Fa',
+  G: 'Sol',
+  A: 'La',
+  B: 'Si',
 }
 
+const LATIN_TO_EN: Record<string, string> = {
+  Do: 'C',
+  Re: 'D',
+  Mi: 'E',
+  Fa: 'F',
+  Sol: 'G',
+  La: 'A',
+  Si: 'B',
+}
+
+// ─── Funciones de utilidad ───────────────────────────────────
+
+/**
+ * Traduce el nombre de un acorde entre notación americana y latina.
+ * Solo traduce la raíz del acorde (ej. 'Am7' → 'Lam7', 'C#dim' → 'Do#dim').
+ *
+ * @param chordName - Nombre del acorde a traducir
+ * @param toLatin   - Si es `true`, traduce de americano a latino; si es `false`, de latino a americano
+ * @returns El nombre del acorde traducido
+ */
+export function translateChordName(chordName: string, toLatin: boolean): string {
+  if (!chordName) return chordName
+
+  if (toLatin) {
+    // Americano → Latino: buscar la raíz (1 o 2 caracteres: letra + posible #/b)
+    const match = chordName.match(/^([A-G])(#|b)?(.*)$/)
+    if (!match) return chordName
+    const [, root, accidental = '', suffix] = match
+    const latinRoot = EN_TO_LATIN[root]
+    if (!latinRoot) return chordName
+    return `${latinRoot}${accidental}${suffix}`
+  } else {
+    // Latino → Americano: intentar coincidir con raíces latinas (ordenar por longitud descendente para 'Sol' antes de 'Si')
+    const sortedRoots = Object.keys(LATIN_TO_EN).sort((a, b) => b.length - a.length)
+    for (const latinRoot of sortedRoots) {
+      if (chordName.startsWith(latinRoot)) {
+        const rest = chordName.slice(latinRoot.length)
+        const enRoot = LATIN_TO_EN[latinRoot]
+        return `${enRoot}${rest}`
+      }
+    }
+    return chordName
+  }
+}
+
+// ─── Tipo del callback ───────────────────────────────────────
+
+/** Callback invocado cuando se detecta (o desaparece) un acorde */
 export type ChordDetectedCallback = (chordName: string) => void
 
+// ─── Servicio de detección de acordes ────────────────────────
+
+/**
+ * Servicio de detección de acordes polifónicos en tiempo real.
+ * Utiliza Web Audio API para capturar audio del micrófono,
+ * construye un chromagram de 12 bins con supresión de armónicos,
+ * y emplea Tonal.js para identificar el acorde a partir de las notas activas.
+ */
 export class ChordDetectorService {
+  // ─── Estado de audio ─────────────────────────────────────
   private audioContext: AudioContext | null = null
   private analyserNode: AnalyserNode | null = null
   private sourceNode: MediaStreamAudioSourceNode | null = null
@@ -28,19 +126,37 @@ export class ChordDetectorService {
   private animFrameId: number | null = null
   private isRunning = false
 
-  // Historial para suavizar la detección y evitar parpadeos
+  // ─── Suavizado temporal ──────────────────────────────────
   private detectionHistory: string[] = []
-  private readonly HISTORY_SIZE = 10
   private lastDetectedChord = ''
 
-  // Rango de frecuencias de acordes (rango medio de piano / guitarra)
-  private readonly MIN_FREQ = 70
-  private readonly MAX_FREQ = 1000
+  // ─── Notación configurable ───────────────────────────────
 
+  /** Notación activa: 'latin' (Do, Re, Mi) o 'american' (C, D, E) */
+  static notation: 'latin' | 'american' = 'latin'
+
+  /**
+   * Configura la notación de salida para los nombres de acordes.
+   * @param notation - 'latin' para Do/Re/Mi, 'american' para C/D/E
+   */
+  static setNotation(notation: 'latin' | 'american'): void {
+    ChordDetectorService.notation = notation
+  }
+
+  // ─── Métodos públicos ────────────────────────────────────
+
+  /**
+   * Inicia la captura de audio y la detección de acordes en tiempo real.
+   * Solicita acceso al micrófono y comienza un loop de análisis vía requestAnimationFrame.
+   *
+   * @param onChordDetected - Callback que recibe el nombre del acorde detectado
+   *                          (o cadena vacía cuando desaparece)
+   */
   async start(onChordDetected: ChordDetectedCallback): Promise<void> {
     if (this.isRunning) return
 
     try {
+      // Solicitar acceso al micrófono sin procesamiento de navegador
       this.stream = await navigator.mediaDevices.getUserMedia({
         audio: {
           echoCancellation: false,
@@ -52,10 +168,12 @@ export class ChordDetectorService {
       this.audioContext = new AudioContext()
       const sampleRate = this.audioContext.sampleRate
 
+      // Configurar el nodo analizador
       this.analyserNode = this.audioContext.createAnalyser()
-      // fftSize de 4096 para tener buena resolución frecuencial en graves
-      this.analyserNode.fftSize = 4096
+      this.analyserNode.fftSize = FFT_SIZE
+      this.analyserNode.smoothingTimeConstant = SMOOTHING
 
+      // Conectar micrófono → analizador
       this.sourceNode = this.audioContext.createMediaStreamSource(this.stream)
       this.sourceNode.connect(this.analyserNode)
 
@@ -64,100 +182,118 @@ export class ChordDetectorService {
 
       this.isRunning = true
 
-      const detect = () => {
+      /**
+       * Loop principal de detección — se ejecuta en cada frame de animación.
+       * 1. Extrae el espectro FFT
+       * 2. Construye el chromagram de 12 bins
+       * 3. Aplica supresión de armónicos
+       * 4. Identifica notas activas
+       * 5. Usa Tonal.js para detectar el acorde
+       * 6. Aplica suavizado temporal por votación
+       */
+      const detect = (): void => {
         if (!this.isRunning) return
 
-        // Obtener espectro en decibelios
+        // Obtener espectro en dB
         this.analyserNode!.getFloatFrequencyData(dataArray)
 
-        // 1. Inicializar vector de croma
+        // ── Paso 1: Construir chromagram ──────────────────
         const chroma = new Float32Array(12)
 
-        // 2. Acumular energía por pitch class
         for (let k = 0; k < bufferLength; k++) {
-          const frequency = k * sampleRate / this.analyserNode!.fftSize
-          
-          if (frequency < this.MIN_FREQ || frequency > this.MAX_FREQ) continue
+          const frequency = (k * sampleRate) / this.analyserNode!.fftSize
+
+          // Filtrar por rango de frecuencias útiles
+          if (frequency < MIN_FREQ || frequency > MAX_FREQ) continue
 
           const db = dataArray[k]
-          if (db < -75) continue // Ignorar ruidos muy débiles
+          if (db < NOISE_FLOOR_DB) continue
 
           // Convertir dB a amplitud lineal
           const amplitude = Math.pow(10, db / 20)
 
-          // Calcular nota MIDI y su pitch class
+          // Calcular nota MIDI y clase de pitch [0..11]
           const midiNote = 12 * Math.log2(frequency / 440) + 69
-          const pitchClass = Math.round(midiNote) % 12
-          const index = (pitchClass + 12) % 12 // Asegurar índice [0..11]
+          const pitchClass = ((Math.round(midiNote) % 12) + 12) % 12
 
-          chroma[index] += amplitude
+          chroma[pitchClass] += amplitude
         }
 
-        // 3. Normalizar croma
-        let maxVal = 0
+        // ── Paso 2: Supresión de armónicos ────────────────
+        // Encontrar la energía máxima del chromagram
+        let chromaMax = 0
         for (let i = 0; i < 12; i++) {
-          if (chroma[i] > maxVal) {
-            maxVal = chroma[i]
+          if (chroma[i] > chromaMax) chromaMax = chroma[i]
+        }
+
+        if (chromaMax > 0) {
+          // Para cada pitch class prominente, atenuar sus armónicos
+          const harmonicThreshold = chromaMax * 0.5
+
+          for (let i = 0; i < 12; i++) {
+            if (chroma[i] >= harmonicThreshold) {
+              // 2do armónico: +12 semitonos → mismo pitch class (reducir 60%)
+              // Se acumula en el mismo bin, así que restamos
+              // En la práctica, el 2do armónico cae en (i + 0) % 12 = i
+              const h2 = i  // octava, mismo pitch class
+              chroma[h2] *= 0.4 // Mantener solo 40% (reducir 60%)
+
+              // 3er armónico: +19 semitonos → +7 pitch classes
+              const h3 = (i + 7) % 12
+              chroma[h3] *= 0.3 // Mantener solo 30% (reducir 70%)
+
+              // 4to armónico: +24 semitonos → mismo pitch class
+              // Ya fue atenuado con h2, aplicar reducción adicional
+              chroma[h2] *= 0.5 // Efecto acumulado: 40% × 50% = 20% (reducir 80% total)
+
+              // 5to armónico: +28 semitonos → +4 pitch classes
+              const h5 = (i + 4) % 12
+              chroma[h5] *= 0.15 // Mantener solo 15% (reducir 85%)
+            }
           }
         }
 
-        if (maxVal > 0.001) {
+        // ── Paso 3: Normalizar y encontrar notas activas ──
+        let normalizeMax = 0
+        for (let i = 0; i < 12; i++) {
+          if (chroma[i] > normalizeMax) normalizeMax = chroma[i]
+        }
+
+        if (normalizeMax > 0.001) {
+          // Normalizar el vector de croma
           for (let i = 0; i < 12; i++) {
-            chroma[i] /= maxVal
+            chroma[i] /= normalizeMax
           }
 
-          // 4. Evaluar contra plantillas
-          let bestChord = ''
-          let bestScore = -Infinity
-
-          for (const [chordName, template] of Object.entries(CHORD_TEMPLATES)) {
-            let matchSum = 0
-            let nonMatchSum = 0
-            let notesInTemplate = 0
-
-            for (let i = 0; i < 12; i++) {
-              if (template[i] === 1) {
-                matchSum += chroma[i]
-                notesInTemplate++
-              } else {
-                nonMatchSum += chroma[i]
-              }
-            }
-
-            const avgMatch = matchSum / notesInTemplate
-            const avgNonMatch = nonMatchSum / (12 - notesInTemplate)
-            const score = avgMatch - 0.75 * avgNonMatch // Penalizar notas fuera de la plantilla
-
-            // Validar que las notas que componen el acorde tengan una energía mínima (ej. > 0.25)
-            let hasAllNotes = true
-            for (let i = 0; i < 12; i++) {
-              if (template[i] === 1 && chroma[i] < 0.25) {
-                hasAllNotes = false
-                break
-              }
-            }
-
-            if (hasAllNotes && score > bestScore) {
-              bestScore = score
-              bestChord = chordName
+          // Recoger notas activas (por encima del umbral)
+          const activeNotes: string[] = []
+          for (let i = 0; i < 12; i++) {
+            if (chroma[i] > ACTIVE_NOTE_THRESHOLD) {
+              activeNotes.push(CHROMA_LABELS_EN[i])
             }
           }
 
-          // 5. Suavizado en el historial
-          if (bestChord && bestScore > 0.25) {
-            this.detectionHistory.push(bestChord)
-          } else {
-            this.detectionHistory.push('')
+          // ── Paso 4: Detectar acorde con Tonal.js ────────
+          let detectedChord = ''
+
+          if (activeNotes.length >= MIN_ACTIVE_NOTES) {
+            const candidates = Chord.detect(activeNotes)
+            if (candidates.length > 0) {
+              detectedChord = candidates[0]
+            }
           }
 
-          if (this.detectionHistory.length > this.HISTORY_SIZE) {
+          // ── Paso 5: Suavizado temporal por votación ─────
+          this.detectionHistory.push(detectedChord)
+          if (this.detectionHistory.length > HISTORY_SIZE) {
             this.detectionHistory.shift()
           }
 
           // Conteo de votos en el historial
-          const counts: { [key: string]: number } = {}
+          const counts: Record<string, number> = {}
           let maxCount = 0
           let dominantChord = ''
+
           for (const chord of this.detectionHistory) {
             if (!chord) continue
             counts[chord] = (counts[chord] || 0) + 1
@@ -167,12 +303,34 @@ export class ChordDetectorService {
             }
           }
 
-          // Emitir si el acorde es consistente (al menos 50% de los frames activos)
-          if (dominantChord && maxCount >= 5 && dominantChord !== this.lastDetectedChord) {
-            this.lastDetectedChord = dominantChord
-            onChordDetected(dominantChord)
+          // Emitir si el acorde tiene suficientes votos y es diferente al anterior
+          if (dominantChord && maxCount >= MIN_VOTES) {
+            // Traducir a notación latina si corresponde
+            const outputName = ChordDetectorService.notation === 'latin'
+              ? translateChordName(dominantChord, true)
+              : dominantChord
+
+            if (outputName !== this.lastDetectedChord) {
+              this.lastDetectedChord = outputName
+              onChordDetected(outputName)
+            }
           } else if (!dominantChord && this.lastDetectedChord !== '') {
+            // El acorde desapareció (silencio o señal insuficiente)
             this.lastDetectedChord = ''
+            onChordDetected('')
+          }
+        } else {
+          // Señal demasiado débil — registrar frame vacío
+          this.detectionHistory.push('')
+          if (this.detectionHistory.length > HISTORY_SIZE) {
+            this.detectionHistory.shift()
+          }
+
+          // Verificar si debemos emitir silencio
+          const hasActiveChord = this.detectionHistory.some(c => c !== '')
+          if (!hasActiveChord && this.lastDetectedChord !== '') {
+            this.lastDetectedChord = ''
+            onChordDetected('')
           }
         }
 
@@ -180,14 +338,18 @@ export class ChordDetectorService {
       }
 
       this.animFrameId = requestAnimationFrame(detect)
-      console.log('🎤 ChordDetectorService iniciado con éxito.')
+      console.log('🎵 ChordDetectorService iniciado con éxito.')
     } catch (err) {
-      console.warn('🎤 No se pudo iniciar el ChordDetectorService:', err)
+      console.warn('🎵 No se pudo iniciar el ChordDetectorService:', err)
     }
   }
 
+  /**
+   * Detiene la detección de acordes y libera todos los recursos de audio.
+   */
   stop(): void {
     this.isRunning = false
+
     if (this.animFrameId) {
       cancelAnimationFrame(this.animFrameId)
       this.animFrameId = null
@@ -204,11 +366,15 @@ export class ChordDetectorService {
       this.stream.getTracks().forEach(track => track.stop())
       this.stream = null
     }
+
+    this.analyserNode = null
     this.detectionHistory = []
     this.lastDetectedChord = ''
-    console.log('🎤 ChordDetectorService detenido.')
+
+    console.log('🎵 ChordDetectorService detenido.')
   }
 
+  /** Indica si el servicio está capturando y analizando audio */
   get running(): boolean {
     return this.isRunning
   }

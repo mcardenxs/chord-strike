@@ -3,89 +3,152 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>🎸 Chord Strike</title>
+    <title>🎸 Chord Strike — Vintage Audio Studio</title>
+    <meta name="description" content="Entrena tu afinación y acordes en tiempo real con Chord Strike. Experiencia analógica minimalista." />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
     <style>
-      @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
+      /* ═══════════════════════════════════════════
+         CHORD STRIKE — WARM ANALOG VINTAGE STUDIO (BRAUN STYLE)
+         ═══════════════════════════════════════════ */
 
       :root {
-        /* Tema Oscuro por defecto */
-        --bg-gradient: radial-gradient(circle at 50% 30%, #161424 0%, #08070d 100%);
-        --ambient-glow-color: rgba(124, 76, 217, 0.06);
-        --text-main: #f1eff7;
-        --text-sub: #89869c;
-        --panel-bg: rgba(25, 23, 38, 0.65);
-        --panel-border: rgba(255, 255, 255, 0.08);
-        --panel-shadow: rgba(0, 0, 0, 0.4);
-        --input-bg: rgba(0, 0, 0, 0.35);
-        --input-border: rgba(255, 255, 255, 0.12);
-        --btn-bg: rgba(255, 255, 255, 0.06);
-        --btn-border: rgba(255, 255, 255, 0.1);
-        --btn-hover-bg: rgba(255, 255, 255, 0.12);
-        --slider-track: rgba(255, 255, 255, 0.08);
-        --game-container-border: rgba(255, 255, 255, 0.08);
-        --mic-active-bg: rgba(76, 217, 100, 0.08);
-        --mic-active-border: rgba(76, 217, 100, 0.25);
-        --mic-color: #a39eb8;
-        --mic-color-active: #4cd964;
+        /* ── Obsidian Charcoal (Dark Theme) ── */
+        --bg-primary: #181716;
+        --bg-secondary: #22201e;
+        --bg-gradient: radial-gradient(ellipse 80% 80% at 50% 20%, #262422 0%, #181716 100%);
+        --mesh-1: rgba(208, 90, 63, 0.03); /* Soft terracotta glow */
+        --mesh-2: rgba(220, 210, 190, 0.02);
+
+        --text-primary: #f4f0ea; /* Soft warm white */
+        --text-secondary: rgba(244, 240, 234, 0.45);
+        --text-accent: #d05a3f; /* Terracotta Clay */
+
+        --panel-bg: rgba(34, 32, 30, 0.85);
+        --panel-border: rgba(244, 240, 234, 0.08);
+        --panel-shadow: 0 12px 30px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.02);
+        --panel-hover-border: rgba(208, 90, 63, 0.3);
+
+        --input-bg: rgba(0, 0, 0, 0.3);
+        --input-border: rgba(244, 240, 234, 0.1);
+        --input-focus-border: rgba(208, 90, 63, 0.5);
+
+        --btn-bg: rgba(244, 240, 234, 0.03);
+        --btn-border: rgba(244, 240, 234, 0.1);
+        --btn-hover-bg: rgba(244, 240, 234, 0.06);
+        --btn-hover-border: rgba(244, 240, 234, 0.2);
+        --btn-active-bg: rgba(208, 90, 63, 0.1);
+
+        --slider-track: rgba(244, 240, 234, 0.08);
+        --slider-thumb: #d05a3f;
+        --slider-thumb-border: #d05a3f;
+
+        --game-border: rgba(244, 240, 234, 0.06);
+        --game-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+        --game-bg: #181716;
+
+        --mic-bg: rgba(34, 32, 30, 0.9);
+        --mic-border: rgba(244, 240, 234, 0.08);
+        --mic-color: rgba(244, 240, 234, 0.4);
+        --mic-active-bg: rgba(208, 90, 63, 0.05);
+        --mic-active-border: rgba(208, 90, 63, 0.4);
+        --mic-active-color: #d05a3f;
+
+        --metronome-active-color: #d05a3f;
+        --metronome-active-bg: rgba(208, 90, 63, 0.08);
+        --metronome-active-border: rgba(208, 90, 63, 0.3);
+
+        --tuner-note-color: #d05a3f;
+        --tuner-needle-color: #2c2a29; /* Dark needle on warm gauge */
+        --tuner-needle-glow: rgba(0, 0, 0, 0); /* No glow for pure analog feel */
+
+        --divider: rgba(244, 240, 234, 0.08);
+        --hint-accent: #d05a3f;
+        --hint-mic-accent: #d05a3f;
       }
 
       body.light-theme {
-        /* Tema Claro */
-        --bg-gradient: radial-gradient(circle at 50% 30%, #fcfbf9 0%, #f5f2eb 100%);
-        --ambient-glow-color: rgba(184, 150, 99, 0.04);
-        --text-main: #3b3836;
-        --text-sub: #8c8680;
-        --panel-bg: rgba(235, 232, 228, 0.75);
-        --panel-border: rgba(0, 0, 0, 0.08);
-        --panel-shadow: rgba(0, 0, 0, 0.06);
-        --input-bg: rgba(255, 255, 255, 0.85);
-        --input-border: rgba(0, 0, 0, 0.12);
-        --btn-bg: rgba(255, 255, 255, 0.6);
-        --btn-border: rgba(0, 0, 0, 0.08);
-        --btn-hover-bg: rgba(0, 0, 0, 0.04);
-        --slider-track: rgba(0, 0, 0, 0.08);
-        --game-container-border: rgba(0, 0, 0, 0.08);
-        --mic-active-bg: rgba(92, 117, 102, 0.08);
-        --mic-active-border: rgba(92, 117, 102, 0.25);
-        --mic-color: #8c8680;
-        --mic-color-active: #5c7566;
+        /* ── Alabaster Cream (Light Theme) ── */
+        --bg-primary: #f5f3ee;
+        --bg-secondary: #ebe8e0;
+        --bg-gradient: radial-gradient(ellipse 80% 80% at 50% 20%, #FAF9F6 0%, #f5f3ee 100%);
+        --mesh-1: rgba(208, 90, 63, 0.02);
+        --mesh-2: rgba(44, 42, 41, 0.01);
+
+        --text-primary: #2c2a29; /* Soft charcoal */
+        --text-secondary: rgba(44, 42, 41, 0.5);
+        --text-accent: #b2482f; /* Darker terracotta */
+
+        --panel-bg: rgba(235, 232, 224, 0.85);
+        --panel-border: rgba(44, 42, 41, 0.08);
+        --panel-shadow: 0 8px 24px rgba(44, 42, 41, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+        --panel-hover-border: rgba(178, 72, 47, 0.4);
+
+        --input-bg: rgba(255, 255, 255, 0.6);
+        --input-border: rgba(44, 42, 41, 0.1);
+        --input-focus-border: rgba(178, 72, 47, 0.5);
+
+        --btn-bg: rgba(255, 255, 255, 0.4);
+        --btn-border: rgba(44, 42, 41, 0.1);
+        --btn-hover-bg: rgba(255, 255, 255, 0.8);
+        --btn-hover-border: rgba(44, 42, 41, 0.2);
+        --btn-active-bg: rgba(178, 72, 47, 0.08);
+
+        --slider-track: rgba(44, 42, 41, 0.08);
+        --slider-thumb: #b2482f;
+        --slider-thumb-border: #b2482f;
+
+        --game-border: rgba(44, 42, 41, 0.06);
+        --game-shadow: 0 6px 20px rgba(44, 42, 41, 0.05);
+        --game-bg: #f5f3ee;
+
+        --mic-bg: rgba(235, 232, 224, 0.9);
+        --mic-border: rgba(44, 42, 41, 0.08);
+        --mic-color: rgba(44, 42, 41, 0.5);
+        --mic-active-bg: rgba(178, 72, 47, 0.05);
+        --mic-active-border: rgba(178, 72, 47, 0.4);
+        --mic-active-color: #b2482f;
+
+        --metronome-active-color: #b2482f;
+        --metronome-active-bg: rgba(178, 72, 47, 0.08);
+        --metronome-active-border: rgba(178, 72, 47, 0.3);
+
+        --tuner-note-color: #b2482f;
+        --tuner-needle-color: #2c2a29;
+        --tuner-needle-glow: rgba(0, 0, 0, 0);
+
+        --divider: rgba(44, 42, 41, 0.08);
+        --hint-accent: #b2482f;
+        --hint-mic-accent: #b2482f;
       }
 
-      * {
+      /* ── Reset ── */
+      *, *::before, *::after {
         margin: 0;
         padding: 0;
         box-sizing: border-box;
       }
 
+      /* ── Body ── */
       body {
         background: var(--bg-gradient);
-        color: var(--text-main);
+        background-color: var(--bg-primary);
+        color: var(--text-primary);
         display: flex;
         flex-direction: column;
         align-items: center;
-        justify-content: center;
+        justify-content: space-between;
         height: 100vh;
         width: 100vw;
-        font-family: 'Outfit', sans-serif;
+        font-family: 'Sora', sans-serif;
         overflow: hidden;
-        padding: 16px;
-        transition: background 0.3s ease, color 0.3s ease;
+        padding: 18px 24px;
+        transition: background 0.5s ease, color 0.4s ease;
+        position: relative;
       }
 
-      /* Glow ambiental de fondo */
-      .ambient-glow {
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        width: 700px;
-        height: 700px;
-        background: radial-gradient(circle, var(--ambient-glow-color) 0%, rgba(0, 0, 0, 0) 70%);
-        pointer-events: none;
-        z-index: 0;
-        transition: background 0.3s ease;
-      }
-
+      /* ── Main Wrapper ── */
       #game-wrapper {
         position: relative;
         z-index: 1;
@@ -94,11 +157,13 @@
         align-items: center;
         width: 100%;
         height: 100%;
-        max-width: 1200px;
+        max-width: 1100px;
         gap: 16px;
       }
 
-      /* Header */
+      /* ═══════════════════════════════════════
+         HEADER STYLING (Vintage Hi-Fi Look)
+         ═══════════════════════════════════════ */
       #header {
         display: flex;
         align-items: center;
@@ -106,367 +171,394 @@
         justify-content: space-between;
         padding: 0 4px;
         flex-shrink: 0;
+        animation: fadeIn 0.5s ease-out;
+      }
+      @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(-10px); }
+        to { opacity: 1; transform: translateY(0); }
       }
 
       #brand {
         display: flex;
         flex-direction: column;
       }
-
       #title {
         font-weight: 700;
-        font-size: 24px;
+        font-size: 22px;
         letter-spacing: -0.5px;
-        background: linear-gradient(135deg, #ff3b30 0%, #ff2d55 30%, #007aff 70%, #4cd964 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.15));
+        color: var(--text-primary);
       }
-
       #subtitle {
-        font-size: 12px;
-        color: var(--text-sub);
-        font-weight: 400;
+        font-size: 10px;
+        color: var(--text-secondary);
+        font-weight: 500;
+        letter-spacing: 0.8px;
+        text-transform: uppercase;
         margin-top: 2px;
-        transition: color 0.3s ease;
       }
 
-      /* Panel de Control superior */
       #controls-group {
         display: flex;
         align-items: center;
         gap: 12px;
       }
 
-      /* Afinador Digital */
-      #tuner-panel {
+      /* ── Minimalist Control Panel ── */
+      .control-panel {
         display: flex;
         align-items: center;
-        gap: 12px;
         background: var(--panel-bg);
-        backdrop-filter: blur(20px);
-        -webkit-backdrop-filter: blur(20px);
-        padding: 6px 14px;
-        border-radius: 12px;
         border: 1px solid var(--panel-border);
         box-shadow: var(--panel-shadow);
-        transition: all 0.3s ease;
+        border-radius: 8px;
+        padding: 8px 14px;
+        gap: 12px;
+        transition: all 0.25s ease;
+      }
+      .control-panel:hover {
+        border-color: var(--panel-hover-border);
       }
 
-      .tuner-label {
-        font-size: 9px;
+      .panel-label {
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 8px;
         font-weight: 700;
-        color: var(--text-sub);
-        opacity: 0.7;
+        color: var(--text-secondary);
         letter-spacing: 1px;
         text-transform: uppercase;
+        user-select: none;
       }
 
-      #tuner-note {
-        font-weight: 700;
-        font-size: 15px;
-        color: #ffcc00;
-        width: 32px;
-        text-align: center;
-      }
-
-      #tuner-hz {
-        font-size: 11px;
-        font-weight: 500;
-        color: var(--text-sub);
-        width: 54px;
-        transition: color 0.3s ease;
-      }
-
-      .tuner-gauge {
-        width: 70px;
-        height: 6px;
-        background: var(--slider-track);
-        border-radius: 3px;
-        position: relative;
-        overflow: hidden;
-      }
-
-      #tuner-needle {
-        position: absolute;
-        top: 0;
-        left: 50%;
-        transform: translateX(-50%);
-        width: 3px;
-        height: 100%;
-        background: #4cd964;
-        transition: left 0.1s ease;
-        box-shadow: 0 0 6px #4cd964;
-      }
-
-      /* Panel de Control de BPM */
-      #bpm-panel {
+      /* ═══════════════════════════════════════
+         ANALOG VU METER TUNER (Warm & Clean)
+         ═══════════════════════════════════════ */
+      .tuner-gauge-wrap {
         display: flex;
+        flex-direction: column;
         align-items: center;
-        gap: 12px;
-        background: var(--panel-bg);
-        backdrop-filter: blur(20px);
-        -webkit-backdrop-filter: blur(20px);
-        padding: 6px 14px;
-        border-radius: 12px;
-        border: 1px solid var(--panel-border);
-        box-shadow: var(--panel-shadow);
-        transition: all 0.3s ease;
+        width: 70px;
+        position: relative;
+      }
+      .tuner-svg {
+        width: 100%;
+        height: 32px;
+        overflow: visible;
+      }
+      #tuner-needle {
+        transform-origin: 50px 48px;
+        transition: transform 0.15s cubic-bezier(0.25, 0.8, 0.25, 1);
+        transform: rotate(0deg);
+      }
+      #tuner-hz {
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 9px;
+        font-weight: 500;
+        color: var(--text-secondary);
+        margin-top: 2px;
+      }
+      #tuner-note {
+        font-size: 18px;
+        font-weight: 700;
+        color: var(--tuner-note-color);
+        min-width: 28px;
+        text-align: center;
+        font-family: 'JetBrains Mono', monospace;
       }
 
-      .control-group {
+      /* ═══════════════════════════════════════
+         BPM TEMPO WIDGET
+         ═══════════════════════════════════════ */
+      .bpm-display-wrap {
         display: flex;
         align-items: center;
         gap: 6px;
       }
-
-      .bpm-label {
-        font-size: 11px;
-        font-weight: 600;
-        color: var(--text-sub);
-        letter-spacing: 0.5px;
-        transition: color 0.3s ease;
-      }
-
       #bpm-input {
         background: var(--input-bg);
         border: 1px solid var(--input-border);
-        color: var(--text-main);
-        width: 48px;
+        color: var(--text-primary);
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 14px;
+        font-weight: 700;
+        width: 44px;
         height: 26px;
         text-align: center;
-        font-weight: 700;
-        font-size: 13px;
-        border-radius: 6px;
+        border-radius: 4px;
         outline: none;
-        font-family: 'Outfit', sans-serif;
-        transition: all 0.3s ease;
+        -moz-appearance: textfield;
+      }
+      #bpm-input::-webkit-outer-spin-button,
+      #bpm-input::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
       }
 
+      .bpm-controls {
+        display: flex;
+        flex-direction: column;
+        gap: 1px;
+      }
       .bpm-btn {
-        width: 26px;
-        height: 26px;
+        width: 16px;
+        height: 12px;
         background: var(--btn-bg);
         border: 1px solid var(--btn-border);
-        color: var(--text-main);
-        border-radius: 6px;
-        font-size: 14px;
-        font-weight: 600;
+        color: var(--text-primary);
+        border-radius: 2px;
+        font-size: 7px;
         cursor: pointer;
         display: flex;
         align-items: center;
         justify-content: center;
-        transition: all 0.2s ease;
+        transition: all 0.15s ease;
       }
-
       .bpm-btn:hover {
+        border-color: var(--btn-hover-border);
         background: var(--btn-hover-bg);
       }
 
       #bpm-slider {
         -webkit-appearance: none;
         appearance: none;
-        width: 90px;
-        height: 4px;
+        width: 50px;
+        height: 3px;
         background: var(--slider-track);
-        border-radius: 2px;
+        border-radius: 1.5px;
         outline: none;
-        transition: background 0.3s ease;
       }
-
       #bpm-slider::-webkit-slider-thumb {
         -webkit-appearance: none;
         appearance: none;
-        width: 12px;
-        height: 12px;
+        width: 9px;
+        height: 9px;
         border-radius: 50%;
-        background: linear-gradient(135deg, #007aff 0%, #0056b3 100%);
+        background: var(--slider-thumb);
         cursor: pointer;
-        border: 1px solid rgba(255, 255, 255, 0.85);
       }
 
       #metronome-toggle {
         background: var(--btn-bg);
         border: 1px solid var(--btn-border);
-        border-radius: 6px;
-        font-size: 12px;
+        border-radius: 4px;
+        width: 26px;
+        height: 26px;
+        font-size: 10px;
         cursor: pointer;
-        padding: 4px 8px;
-        color: var(--text-sub);
-        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--text-secondary);
+        transition: all 0.2s;
       }
-
-      #metronome-toggle:hover {
-        background: var(--btn-hover-bg);
-      }
-
       #metronome-toggle.active {
-        color: #4cd964;
-        background: rgba(76, 217, 100, 0.12);
-        border-color: rgba(76, 217, 100, 0.35);
+        color: var(--metronome-active-color);
+        background: var(--metronome-active-bg);
+        border-color: var(--metronome-active-border);
       }
 
-      /* Botón de cambio de tema */
       #theme-toggle {
         background: var(--btn-bg);
         border: 1px solid var(--btn-border);
         border-radius: 6px;
-        font-size: 13px;
+        font-size: 12px;
         cursor: pointer;
-        width: 28px;
-        height: 28px;
+        width: 26px;
+        height: 26px;
         display: flex;
         align-items: center;
         justify-content: center;
-        color: var(--text-main);
-        transition: all 0.2s ease;
-        outline: none;
+        color: var(--text-primary);
+        transition: all 0.2s;
       }
-
       #theme-toggle:hover {
-        background: var(--btn-hover-bg);
+        border-color: var(--btn-hover-border);
       }
 
-      /* Contenedor del Juego Fluido */
+      /* ── Notation Toggle ── */
+      #notation-toggle {
+        background: var(--btn-bg);
+        border: 1px solid var(--btn-border);
+        border-radius: 6px;
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 9px;
+        font-weight: 700;
+        cursor: pointer;
+        height: 26px;
+        padding: 0 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--text-secondary);
+        transition: all 0.2s;
+        letter-spacing: 0.5px;
+        white-space: nowrap;
+      }
+      #notation-toggle:hover {
+        border-color: var(--btn-hover-border);
+        background: var(--btn-hover-bg);
+        color: var(--text-primary);
+      }
+      #notation-toggle .notation-active {
+        color: var(--text-accent);
+        font-weight: 800;
+      }
+
+      /* ═══════════════════════════════════════
+         GAME CONTAINER
+         ═══════════════════════════════════════ */
       #game-container {
         position: relative;
         width: 100%;
-        flex-grow: 1; /* Crece para ocupar todo el espacio vertical sobrante */
-        border: 1px solid var(--game-container-border);
-        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+        flex-grow: 1;
+        border: 1px solid var(--game-border);
+        box-shadow: var(--game-shadow);
         border-radius: 12px;
         overflow: hidden;
-        background: #08070d;
-        transition: border 0.3s ease;
+        background: var(--game-bg);
+        transition: border 0.4s ease, box-shadow 0.4s ease, background 0.4s ease;
       }
-
       #game-container canvas {
         display: block;
         width: 100%;
         height: 100%;
       }
 
-      /* Footer */
+      /* ═══════════════════════════════════════
+         FOOTER & MIC STATUS
+         ═══════════════════════════════════════ */
       #footer {
         display: flex;
-        gap: 32px;
+        gap: 24px;
         width: 100%;
         justify-content: center;
         flex-shrink: 0;
-        padding-top: 4px;
+        padding: 4px 0;
       }
-
       .hint {
-        font-size: 11px;
-        color: var(--text-sub);
-        font-weight: 400;
-        transition: color 0.3s ease;
+        font-size: 9px;
+        color: var(--text-secondary);
+        font-weight: 500;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
       }
-
       .hint span {
-        color: #ff2d55;
-        font-weight: 600;
+        color: var(--hint-accent);
+        font-weight: 700;
       }
 
-      .hint.mic-hint span {
-        color: #007aff;
-      }
-
-      /* Estado del Micrófono */
       #mic-status {
         position: fixed;
-        bottom: 16px;
-        right: 16px;
-        padding: 6px 12px;
-        border: 1px solid var(--panel-border);
-        border-radius: 20px;
-        font-size: 9px;
-        font-weight: 600;
+        bottom: 12px;
+        right: 12px;
+        padding: 5px 10px;
+        border: 1px solid var(--mic-border);
+        border-radius: 6px;
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 8px;
+        font-weight: 700;
         color: var(--mic-color);
         letter-spacing: 0.5px;
-        background: var(--panel-bg);
-        backdrop-filter: blur(10px);
-        -webkit-backdrop-filter: blur(10px);
+        text-transform: uppercase;
+        background: var(--mic-bg);
         z-index: 100;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
         display: flex;
         align-items: center;
+        gap: 5px;
         transition: all 0.3s ease;
       }
-
       #mic-status.active {
         border-color: var(--mic-active-border);
-        color: var(--mic-color-active);
+        color: var(--mic-active-color);
         background: var(--mic-active-bg);
       }
-
       #mic-status .dot {
-        display: inline-block;
-        width: 5px;
-        height: 5px;
+        width: 4px;
+        height: 4px;
         border-radius: 50%;
         background: currentColor;
-        margin-right: 6px;
-        animation: pulse 1.8s infinite;
       }
 
-      @keyframes pulse {
-        0%, 100% { opacity: 1; transform: scale(1); }
-        50% { opacity: 0.3; transform: scale(1.1); }
+      @media (max-width: 768px) {
+        #header {
+          flex-direction: column;
+          gap: 12px;
+          align-items: center;
+        }
+        #controls-group {
+          width: 100%;
+          justify-content: center;
+        }
       }
     </style>
   </head>
   <body>
-    <div class="ambient-glow"></div>
-
     <div id="game-wrapper">
+      <!-- ═══ HEADER ═══ -->
       <div id="header">
         <div id="brand">
-          <div id="title">🎸 Chord Strike</div>
-          <div id="subtitle">Entrena tu afinación y acordes en tiempo real</div>
+          <div id="title">Chord Strike</div>
+          <div id="subtitle">Analog Tuning & Training</div>
         </div>
-        
+
         <div id="controls-group">
-          <!-- Widget del Afinador -->
-          <div id="tuner-panel">
-            <span class="tuner-label">AFINADOR</span>
+          <!-- Tuner Panel (Warm Minimalist VU Style) -->
+          <div id="tuner-panel" class="control-panel">
+            <span class="panel-label">Tuner</span>
             <div id="tuner-note">-</div>
-            <div id="tuner-hz">0.0 Hz</div>
-            <div class="tuner-gauge">
-              <div id="tuner-needle"></div>
+            <div class="tuner-gauge-wrap">
+              <svg class="tuner-svg" viewBox="0 0 100 50">
+                <!-- Scale Arc -->
+                <path d="M 20 45 A 30 30 0 0 1 80 45" fill="none" stroke="var(--divider)" stroke-width="2.5" stroke-linecap="round"/>
+                <!-- Center Tick -->
+                <line x1="50" y1="15" x2="50" y2="22" stroke="var(--text-accent)" stroke-width="1.5"/>
+                <!-- Dynamic Needle -->
+                <line id="tuner-needle" x1="50" y1="45" x2="50" y2="18" stroke="var(--text-primary)" stroke-width="2" stroke-linecap="round"/>
+                <!-- Center knob -->
+                <circle cx="50" cy="45" r="3" fill="var(--bg-secondary)" stroke="var(--text-secondary)" stroke-width="1"/>
+              </svg>
+              <div id="tuner-hz">0.0 Hz</div>
             </div>
           </div>
 
-          <!-- Control de BPM -->
-          <div id="bpm-panel">
-            <div class="control-group">
-              <span class="bpm-label">BPM</span>
-              <button id="bpm-minus" class="bpm-btn">-</button>
+          <!-- Tempo control -->
+          <div id="bpm-panel" class="control-panel">
+            <span class="panel-label">BPM</span>
+            <div class="bpm-display-wrap">
               <input type="number" id="bpm-input" min="10" max="250" value="60" />
-              <button id="bpm-plus" class="bpm-btn">+</button>
+              <div class="bpm-controls">
+                <button id="bpm-plus" class="bpm-btn">▲</button>
+                <button id="bpm-minus" class="bpm-btn">▼</button>
+              </div>
             </div>
             <input type="range" id="bpm-slider" min="10" max="250" value="60" />
-            <button id="metronome-toggle" class="control-btn" title="Activar metrónomo">🔇</button>
+            <button id="metronome-toggle" title="Activar metrónomo">🔇</button>
           </div>
 
-          <!-- Botón de cambio de tema -->
-          <button id="theme-toggle" title="Cambiar tema">🌙</button>
+          <!-- Theme & Notation -->
+          <div style="display: flex; gap: 8px; align-items: center;">
+            <button id="notation-toggle" title="Cambiar cifrado musical">CIFRADO: DO RE MI</button>
+            <button id="theme-toggle" title="Cambiar tema">🌙</button>
+          </div>
         </div>
       </div>
 
+      <!-- ═══ GAME AREA ═══ -->
       <div id="game-container">
-        <!-- Phaser monta el canvas aquí -->
+        <!-- Phaser mounts canvas here -->
       </div>
 
+      <!-- ═══ FOOTER ═══ -->
       <div id="footer">
-        <div class="hint"><span>CLICK</span> para destruir notas manualmente</div>
-        <div class="hint">Las notas caen — no dejes que superen la línea roja</div>
-        <div class="hint mic-hint"><span>MICRÓFONO</span> activo — toca notas reales para disparar</div>
+        <div class="hint"><span>Click</span> para reventar notas</div>
+        <div class="hint">No dejes pasar notas a la <span>zona crítica</span></div>
+        <div class="hint"><span>Micrófono</span> afinación en vivo</div>
       </div>
     </div>
 
+    <!-- Mic Status Badge -->
     <div id="mic-status">
-      <span class="dot"></span>MIC ESPERA
+      <span class="dot"></span>MIC DESACTIVADO
     </div>
 
     <script type="module" src="/src/main.ts"></script>
