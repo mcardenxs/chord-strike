@@ -36,7 +36,7 @@ const MAX_FREQ = 2000
 const NOISE_FLOOR_DB = -60
 
 /** Umbral adaptativo: energía normalizada mínima para considerar una nota activa */
-const ACTIVE_NOTE_THRESHOLD = 0.30
+const ACTIVE_NOTE_THRESHOLD = 0.25
 
 /** Mínimo de notas activas para intentar detección de acorde */
 const MIN_ACTIVE_NOTES = 2
@@ -219,39 +219,8 @@ export class ChordDetectorService {
           chroma[pitchClass] += amplitude
         }
 
-        // ── Paso 2: Supresión de armónicos ────────────────
-        // Encontrar la energía máxima del chromagram
-        let chromaMax = 0
-        for (let i = 0; i < 12; i++) {
-          if (chroma[i] > chromaMax) chromaMax = chroma[i]
-        }
-
-        if (chromaMax > 0) {
-          // Para cada pitch class prominente, atenuar sus armónicos
-          const harmonicThreshold = chromaMax * 0.5
-
-          for (let i = 0; i < 12; i++) {
-            if (chroma[i] >= harmonicThreshold) {
-              // 2do armónico: +12 semitonos → mismo pitch class (reducir 60%)
-              // Se acumula en el mismo bin, así que restamos
-              // En la práctica, el 2do armónico cae en (i + 0) % 12 = i
-              const h2 = i  // octava, mismo pitch class
-              chroma[h2] *= 0.4 // Mantener solo 40% (reducir 60%)
-
-              // 3er armónico: +19 semitonos → +7 pitch classes
-              const h3 = (i + 7) % 12
-              chroma[h3] *= 0.3 // Mantener solo 30% (reducir 70%)
-
-              // 4to armónico: +24 semitonos → mismo pitch class
-              // Ya fue atenuado con h2, aplicar reducción adicional
-              chroma[h2] *= 0.5 // Efecto acumulado: 40% × 50% = 20% (reducir 80% total)
-
-              // 5to armónico: +28 semitonos → +4 pitch classes
-              const h5 = (i + 4) % 12
-              chroma[h5] *= 0.15 // Mantener solo 15% (reducir 85%)
-            }
-          }
-        }
+        // ── Paso 2: Supresión de armónicos (Desactivada por causar pérdida de fundamentales en acordes) ──
+        // Pasamos directamente a la normalización.
 
         // ── Paso 3: Normalizar y encontrar notas activas ──
         let normalizeMax = 0
