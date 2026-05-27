@@ -1332,8 +1332,37 @@ export default class GameScene extends Phaser.Scene {
     }
   }
 
-  /** Maneja el cambio de tamaño del canvas para recalcular carriles */
+  /** Maneja el cambio de tamaño del canvas para recalcular carriles y reposicionar elementos */
   private handleResize(gameSize: Phaser.Structs.Size): void {
-    this.calculateLanes(gameSize.width)
+    const { width, height } = gameSize
+    this.calculateLanes(width)
+    
+    // Redibujar gráficos responsivos
+    this.createBackground(width, height)
+    this.createDangerLine(width, height)
+    
+    // Reposicionar UI
+    if (this.scoreLabel) {
+      this.scoreLabel.setPosition(24, 16)
+      this.scoreText.setPosition(24, 30)
+      
+      this.hpLabel.setPosition(width / 2, 16)
+      this.hpText.setPosition(width / 2, 30)
+      
+      this.comboLabel.setPosition(width - 24, 16)
+      this.comboText.setPosition(width - 24, 30)
+    }
+
+    // Reposicionar Game Over si está visible
+    if (this.gameOverContainer) {
+      this.gameOverContainer.setPosition(width / 2, height / 2)
+      const overlay = this.gameOverContainer.list[0] as Phaser.GameObjects.Graphics
+      if (overlay) {
+        overlay.clear()
+        const isLight = this.currentTheme === 'light'
+        overlay.fillStyle(isLight ? 0xfaf8f3 : 0x0a0a12, 0.95)
+        overlay.fillRect(-width / 2, -height / 2, width, height)
+      }
+    }
   }
 }
