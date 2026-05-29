@@ -7,120 +7,50 @@
     <meta name="description" content="Entrena tu afinación y acordes en tiempo real con Chord Strike. Experiencia analógica minimalista." />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
     <style>
       /* ═══════════════════════════════════════════
-         CHORD STRIKE — WARM ANALOG VINTAGE STUDIO (BRAUN STYLE)
+         CHORD STRIKE — NUEVO SISTEMA DE DISEÑO OSCURO
          ═══════════════════════════════════════════ */
 
       :root {
-        /* ── Obsidian Charcoal (Dark Theme) ── */
-        --bg-primary: #181716;
-        --bg-secondary: #22201e;
-        --bg-gradient: radial-gradient(ellipse 80% 80% at 50% 20%, #262422 0%, #181716 100%);
-        --mesh-1: rgba(208, 90, 63, 0.03); /* Soft terracotta glow */
-        --mesh-2: rgba(220, 210, 190, 0.02);
+        --bg: #0e0c14;
+        --bg2: #16121f;
+        --bg3: #1e1828;
+        --purple: #a855f7;
+        --purple-dim: #7c3aed;
+        --purple-pale: #2d1f4a;
+        --green: #22c55e;
+        --green-dim: #16a34a;
+        --green-pale: #0f2a1a;
+        --yellow: #facc15;
+        --yellow-dim: #ca8a04;
+        --yellow-pale: #2a2000;
+        --white: #f5f0ff;
+        --muted: #6b5f8a;
+        --faint: #2a2040;
 
-        --text-primary: #f4f0ea; /* Soft warm white */
-        --text-secondary: rgba(244, 240, 234, 0.45);
-        --text-accent: #d05a3f; /* Terracotta Clay */
-
-        --panel-bg: rgba(34, 32, 30, 0.85);
-        --panel-border: rgba(244, 240, 234, 0.08);
-        --panel-shadow: 0 12px 30px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.02);
-        --panel-hover-border: rgba(208, 90, 63, 0.3);
-
-        --input-bg: rgba(0, 0, 0, 0.3);
-        --input-border: rgba(244, 240, 234, 0.1);
-        --input-focus-border: rgba(208, 90, 63, 0.5);
-
-        --btn-bg: rgba(244, 240, 234, 0.03);
-        --btn-border: rgba(244, 240, 234, 0.1);
-        --btn-hover-bg: rgba(244, 240, 234, 0.06);
-        --btn-hover-border: rgba(244, 240, 234, 0.2);
-        --btn-active-bg: rgba(208, 90, 63, 0.1);
-
-        --slider-track: rgba(244, 240, 234, 0.08);
-        --slider-thumb: #d05a3f;
-        --slider-thumb-border: #d05a3f;
-
-        --game-border: rgba(244, 240, 234, 0.06);
-        --game-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
-        --game-bg: #181716;
-
-        --mic-bg: rgba(34, 32, 30, 0.9);
-        --mic-border: rgba(244, 240, 234, 0.08);
-        --mic-color: rgba(244, 240, 234, 0.4);
-        --mic-active-bg: rgba(208, 90, 63, 0.05);
-        --mic-active-border: rgba(208, 90, 63, 0.4);
-        --mic-active-color: #d05a3f;
-
-        --metronome-active-color: #d05a3f;
-        --metronome-active-bg: rgba(208, 90, 63, 0.08);
-        --metronome-active-border: rgba(208, 90, 63, 0.3);
-
-        --tuner-note-color: #d05a3f;
-        --tuner-needle-color: #2c2a29; /* Dark needle on warm gauge */
-        --tuner-needle-glow: rgba(0, 0, 0, 0); /* No glow for pure analog feel */
-
-        --divider: rgba(244, 240, 234, 0.08);
-        --hint-accent: #d05a3f;
-        --hint-mic-accent: #d05a3f;
+        --panel-shadow: 0 12px 36px rgba(0, 0, 0, 0.6);
+        --transition-speed: 0.3s;
       }
 
       body.light-theme {
-        /* ── Alabaster Cream (Light Theme) ── */
-        --bg-primary: #f5f3ee;
-        --bg-secondary: #ebe8e0;
-        --bg-gradient: radial-gradient(ellipse 80% 80% at 50% 20%, #FAF9F6 0%, #f5f3ee 100%);
-        --mesh-1: rgba(208, 90, 63, 0.02);
-        --mesh-2: rgba(44, 42, 41, 0.01);
-
-        --text-primary: #2c2a29; /* Soft charcoal */
-        --text-secondary: rgba(44, 42, 41, 0.5);
-        --text-accent: #b2482f; /* Darker terracotta */
-
-        --panel-bg: rgba(235, 232, 224, 0.85);
-        --panel-border: rgba(44, 42, 41, 0.08);
-        --panel-shadow: 0 8px 24px rgba(44, 42, 41, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.9);
-        --panel-hover-border: rgba(178, 72, 47, 0.4);
-
-        --input-bg: rgba(255, 255, 255, 0.6);
-        --input-border: rgba(44, 42, 41, 0.1);
-        --input-focus-border: rgba(178, 72, 47, 0.5);
-
-        --btn-bg: rgba(255, 255, 255, 0.4);
-        --btn-border: rgba(44, 42, 41, 0.1);
-        --btn-hover-bg: rgba(255, 255, 255, 0.8);
-        --btn-hover-border: rgba(44, 42, 41, 0.2);
-        --btn-active-bg: rgba(178, 72, 47, 0.08);
-
-        --slider-track: rgba(44, 42, 41, 0.08);
-        --slider-thumb: #b2482f;
-        --slider-thumb-border: #b2482f;
-
-        --game-border: rgba(44, 42, 41, 0.06);
-        --game-shadow: 0 6px 20px rgba(44, 42, 41, 0.05);
-        --game-bg: #f5f3ee;
-
-        --mic-bg: rgba(235, 232, 224, 0.9);
-        --mic-border: rgba(44, 42, 41, 0.08);
-        --mic-color: rgba(44, 42, 41, 0.5);
-        --mic-active-bg: rgba(178, 72, 47, 0.05);
-        --mic-active-border: rgba(178, 72, 47, 0.4);
-        --mic-active-color: #b2482f;
-
-        --metronome-active-color: #b2482f;
-        --metronome-active-bg: rgba(178, 72, 47, 0.08);
-        --metronome-active-border: rgba(178, 72, 47, 0.3);
-
-        --tuner-note-color: #b2482f;
-        --tuner-needle-color: #2c2a29;
-        --tuner-needle-glow: rgba(0, 0, 0, 0);
-
-        --divider: rgba(44, 42, 41, 0.08);
-        --hint-accent: #b2482f;
-        --hint-mic-accent: #b2482f;
+        --bg: #faf8f5;
+        --bg2: #f3eee7;
+        --bg3: #e6ded3;
+        --purple: #9333ea;
+        --purple-dim: #7c3aed;
+        --purple-pale: #f3e8ff;
+        --green: #16a34a;
+        --green-dim: #15803d;
+        --green-pale: #dcfce7;
+        --yellow: #ca8a04;
+        --yellow-dim: #a16207;
+        --yellow-pale: #fef9c3;
+        --white: #120e16;
+        --muted: #8b7d9b;
+        --faint: #e6ded3;
+        --panel-shadow: 0 12px 36px rgba(0, 0, 0, 0.1);
       }
 
       /* ── Reset ── */
@@ -130,347 +60,912 @@
         box-sizing: border-box;
       }
 
-      /* ── Body ── */
       body {
-        background: var(--bg-gradient);
-        background-color: var(--bg-primary);
-        color: var(--text-primary);
+        background-color: var(--bg);
+        color: var(--white);
         display: flex;
         flex-direction: column;
         align-items: center;
-        justify-content: space-between;
+        justify-content: center;
         height: 100vh;
+        height: 100dvh;
         width: 100vw;
         font-family: 'Sora', sans-serif;
         overflow: hidden;
-        padding: 18px 24px;
-        transition: background 0.5s ease, color 0.4s ease;
         position: relative;
       }
 
-      /* ── Main Wrapper ── */
-      #game-wrapper {
-        position: relative;
-        z-index: 1;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
+      /* JetBrains Mono para elementos musicales y métricas */
+      .mono, input, button, select, #tuner-hz, #tuner-cents, .badge, .tag, .stat-value, .chord-name, .notes-list {
+        font-family: 'JetBrains Mono', monospace !important;
+      }
+
+      /* ── Enrutador de Pantallas ── */
+      .screen {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        margin: 0 auto;
         width: 100%;
-        height: 100%;
         max-width: 1100px;
-        gap: 16px;
-      }
-
-      /* ═══════════════════════════════════════
-         HEADER STYLING (Vintage Hi-Fi Look)
-         ═══════════════════════════════════════ */
-      #header {
-        display: flex;
-        align-items: center;
-        width: 100%;
-        justify-content: space-between;
-        padding: 0 4px;
-        flex-shrink: 0;
-        animation: fadeIn 0.5s ease-out;
-      }
-      @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(-10px); }
-        to { opacity: 1; transform: translateY(0); }
-      }
-
-      #brand {
+        height: 100%;
         display: flex;
         flex-direction: column;
-      }
-      #title {
-        font-weight: 700;
-        font-size: 22px;
-        letter-spacing: -0.5px;
-        color: var(--text-primary);
-      }
-      #subtitle {
-        font-size: 10px;
-        color: var(--text-secondary);
-        font-weight: 500;
-        letter-spacing: 0.8px;
-        text-transform: uppercase;
-        margin-top: 2px;
+        align-items: center;
+        justify-content: center;
+        padding: 24px;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity var(--transition-speed) ease-in-out, visibility var(--transition-speed) ease-in-out;
+        z-index: 1;
+        visibility: hidden;
       }
 
-      #controls-group {
-        display: flex;
-        align-items: center;
-        gap: 12px;
+      .screen.active {
+        opacity: 1;
+        pointer-events: auto;
+        z-index: 2;
+        visibility: visible;
       }
 
-      /* ── Minimalist Control Panel ── */
-      .control-panel {
-        display: flex;
-        align-items: center;
-        background: var(--panel-bg);
-        border: 1px solid var(--panel-border);
-        box-shadow: var(--panel-shadow);
+      .screen.hidden {
+        visibility: hidden;
+      }
+
+      /* Botones del Sistema */
+      .btn {
+        background: var(--purple);
+        color: var(--white);
+        border: none;
         border-radius: 8px;
-        padding: 8px 14px;
-        gap: 12px;
-        transition: all 0.25s ease;
-      }
-      .control-panel:hover {
-        border-color: var(--panel-hover-border);
-      }
-
-      .panel-label {
-        font-family: 'JetBrains Mono', monospace;
-        font-size: 8px;
-        font-weight: 700;
-        color: var(--text-secondary);
-        letter-spacing: 1px;
-        text-transform: uppercase;
-        user-select: none;
-      }
-
-      /* ═══════════════════════════════════════
-         ANALOG VU METER TUNER (Warm & Clean)
-         ═══════════════════════════════════════ */
-      .tuner-gauge-wrap {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        width: 70px;
-        position: relative;
-      }
-      .tuner-svg {
-        width: 100%;
-        height: 32px;
-        overflow: visible;
-      }
-      #tuner-needle {
-        transform-origin: 50px 48px;
-        transition: transform 0.15s cubic-bezier(0.25, 0.8, 0.25, 1);
-        transform: rotate(0deg);
-      }
-      #tuner-hz {
-        font-family: 'JetBrains Mono', monospace;
-        font-size: 9px;
-        font-weight: 500;
-        color: var(--text-secondary);
-        margin-top: 2px;
-      }
-      #tuner-note {
-        font-size: 18px;
-        font-weight: 700;
-        color: var(--tuner-note-color);
-        min-width: 28px;
-        text-align: center;
-        font-family: 'JetBrains Mono', monospace;
-      }
-
-      /* ═══════════════════════════════════════
-         BPM TEMPO WIDGET
-         ═══════════════════════════════════════ */
-      .bpm-display-wrap {
-        display: flex;
-        align-items: center;
-        gap: 6px;
-      }
-      #bpm-input {
-        background: var(--input-bg);
-        border: 1px solid var(--input-border);
-        color: var(--text-primary);
-        font-family: 'JetBrains Mono', monospace;
+        padding: 12px 24px;
         font-size: 14px;
         font-weight: 700;
-        width: 44px;
-        height: 26px;
-        text-align: center;
-        border-radius: 4px;
-        outline: none;
-        -moz-appearance: textfield;
-      }
-      #bpm-input::-webkit-outer-spin-button,
-      #bpm-input::-webkit-inner-spin-button {
-        -webkit-appearance: none;
-        margin: 0;
-      }
-
-      .bpm-controls {
-        display: flex;
-        flex-direction: column;
-        gap: 1px;
-      }
-      .bpm-btn {
-        width: 16px;
-        height: 12px;
-        background: var(--btn-bg);
-        border: 1px solid var(--btn-border);
-        color: var(--text-primary);
-        border-radius: 2px;
-        font-size: 7px;
         cursor: pointer;
-        display: flex;
+        display: inline-flex;
         align-items: center;
         justify-content: center;
-        transition: all 0.15s ease;
-      }
-      .bpm-btn:hover {
-        border-color: var(--btn-hover-border);
-        background: var(--btn-hover-bg);
+        gap: 8px;
+        transition: all 0.2s ease;
       }
 
-      #bpm-slider {
-        -webkit-appearance: none;
-        appearance: none;
-        width: 50px;
-        height: 3px;
-        background: var(--slider-track);
-        border-radius: 1.5px;
-        outline: none;
-      }
-      #bpm-slider::-webkit-slider-thumb {
-        -webkit-appearance: none;
-        appearance: none;
-        width: 9px;
-        height: 9px;
-        border-radius: 50%;
-        background: var(--slider-thumb);
-        cursor: pointer;
+      .btn:hover {
+        background: var(--purple-dim);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(168, 85, 247, 0.3);
       }
 
-      #metronome-toggle {
-        background: var(--btn-bg);
-        border: 1px solid var(--btn-border);
-        border-radius: 4px;
-        width: 26px;
-        height: 26px;
-        font-size: 10px;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: var(--text-secondary);
-        transition: all 0.2s;
-      }
-      #metronome-toggle.active {
-        color: var(--metronome-active-color);
-        background: var(--metronome-active-bg);
-        border-color: var(--metronome-active-border);
+      .btn-ghost {
+        background: transparent;
+        border: 1px solid var(--muted);
+        color: var(--white);
       }
 
-      #theme-toggle {
-        background: var(--btn-bg);
-        border: 1px solid var(--btn-border);
-        border-radius: 6px;
-        font-size: 12px;
-        cursor: pointer;
-        width: 26px;
-        height: 26px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: var(--text-primary);
-        transition: all 0.2s;
-      }
-      #theme-toggle:hover {
-        border-color: var(--btn-hover-border);
+      .btn-ghost:hover {
+        background: rgba(245, 240, 255, 0.05);
+        border-color: var(--white);
+        box-shadow: none;
       }
 
-      /* ── Notation Toggle ── */
-      #notation-toggle {
-        background: var(--btn-bg);
-        border: 1px solid var(--btn-border);
-        border-radius: 6px;
-        font-family: 'JetBrains Mono', monospace;
+      .btn-green {
+        background: var(--green);
+      }
+      .btn-green:hover {
+        background: var(--green-dim);
+        box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
+      }
+
+      /* Badges y Tags */
+      .badge {
         font-size: 9px;
         font-weight: 700;
-        cursor: pointer;
-        height: 26px;
-        padding: 0 8px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: var(--text-secondary);
-        transition: all 0.2s;
+        text-transform: uppercase;
+        padding: 2px 8px;
+        border-radius: 12px;
         letter-spacing: 0.5px;
-        white-space: nowrap;
       }
-      #notation-toggle:hover {
-        border-color: var(--btn-hover-border);
-        background: var(--btn-hover-bg);
-        color: var(--text-primary);
-      }
-      #notation-toggle .notation-active {
-        color: var(--text-accent);
+
+      /* Logo Styling */
+      .logo {
+        font-size: 24px;
         font-weight: 800;
+        letter-spacing: -0.5px;
+        user-select: none;
+      }
+      .logo-chord {
+        color: var(--white);
+      }
+      .logo-strike {
+        color: var(--purple);
       }
 
       /* ═══════════════════════════════════════
-         GAME CONTAINER
+         PANTALLA DE INICIO (HERO SCREEN)
          ═══════════════════════════════════════ */
+      #start-screen {
+        justify-content: space-between;
+      }
+
+      /* Navbar */
+      .navbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        width: 100%;
+        max-width: 1100px;
+        padding: 12px 4px;
+        flex-shrink: 0;
+      }
+
+      .nav-links {
+        display: flex;
+        gap: 20px;
+      }
+
+      .nav-link {
+        color: var(--muted);
+        text-decoration: none;
+        font-size: 12px;
+        font-weight: 500;
+        transition: color 0.2s;
+      }
+      .nav-link:hover {
+        color: var(--white);
+      }
+
+      /* Hero Content */
+      .hero-content {
+        text-align: center;
+        max-width: 600px;
+        margin: auto 0;
+        z-index: 10;
+      }
+
+      .hero-title {
+        font-size: 64px;
+        font-weight: 800;
+        line-height: 1.1;
+        letter-spacing: -2px;
+        margin-bottom: 16px;
+      }
+      .hero-title span {
+        display: block;
+      }
+      .title-purple { color: var(--purple); }
+      .title-green { color: var(--green); }
+
+      .hero-subtitle {
+        color: var(--muted);
+        font-size: 14px;
+        line-height: 1.6;
+        margin-bottom: 32px;
+        font-weight: 400;
+        max-width: 480px;
+        margin-left: auto;
+        margin-right: auto;
+      }
+
+      .hero-buttons {
+        display: flex;
+        gap: 16px;
+        justify-content: center;
+      }
+
+      /* Cuerdas decorativas verticales en el fondo */
+      .guitar-strings-bg {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        justify-content: space-around;
+        padding: 0 10%;
+        pointer-events: none;
+        z-index: 1;
+        opacity: 0.15;
+      }
+
+      .guitar-string-line {
+        width: 1px;
+        height: 100%;
+        background: linear-gradient(180deg, var(--faint) 0%, var(--muted) 50%, var(--faint) 100%);
+      }
+      .guitar-string-line:nth-child(1) { background: var(--purple); width: 2px; }
+      .guitar-string-line:nth-child(2) { background: var(--purple-dim); }
+      .guitar-string-line:nth-child(3) { background: var(--green); }
+      .guitar-string-line:nth-child(4) { background: var(--green-dim); }
+      .guitar-string-line:nth-child(5) { background: var(--yellow); }
+      .guitar-string-line:nth-child(6) { background: var(--yellow-dim); width: 1.5px; }
+
+      /* Bottom Stats Strip */
+      .stats-strip {
+        display: flex;
+        justify-content: space-between;
+        width: 100%;
+        max-width: 900px;
+        border-top: 1px solid var(--faint);
+        padding-top: 24px;
+        flex-shrink: 0;
+      }
+
+      .stat-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+        flex: 1;
+      }
+
+      .stat-num {
+        font-size: 18px;
+        font-weight: 700;
+        color: var(--white);
+      }
+
+      .stat-label {
+        font-size: 9px;
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+
+      /* ═══════════════════════════════════════
+         SELECTOR DE MODOS
+         ═══════════════════════════════════════ */
+      .mode-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 32px;
+        width: 100%;
+        max-width: 1000px;
+      }
+
+      .section-header {
+        text-align: center;
+      }
+      .section-header h2 {
+        font-size: 32px;
+        font-weight: 800;
+        margin-bottom: 8px;
+      }
+      .section-header p {
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .mode-cards {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 20px;
+        width: 100%;
+      }
+
+      .mode-card {
+        background: var(--bg2);
+        border: 1px solid var(--faint);
+        border-radius: 12px;
+        padding: 24px;
+        cursor: pointer;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        transition: all 0.3s ease;
+        position: relative;
+        text-align: left;
+      }
+
+      .mode-card:hover {
+        transform: translateY(-4px);
+        background: var(--bg3);
+      }
+
+      .mode-card.arcade-mode { border-color: var(--purple-dim); }
+      .mode-card.circle-mode { border-color: var(--green-dim); }
+      .mode-card.free-mode { border-color: var(--yellow-dim); }
+
+      .card-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .card-title {
+        font-size: 18px;
+        font-weight: 700;
+      }
+
+      .card-desc {
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.5;
+        flex-grow: 1;
+      }
+
+      .card-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+
+      .tag {
+        font-size: 9px;
+        background: var(--bg);
+        border: 1px solid var(--faint);
+        color: var(--muted);
+        padding: 2px 6px;
+        border-radius: 4px;
+      }
+
+      /* ═══════════════════════════════════════
+         SELECTOR DE DIFICULTAD (ARCADE)
+         ═══════════════════════════════════════ */
+      .difficulty-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 24px;
+        width: 100%;
+        max-width: 600px;
+      }
+
+      .diff-list {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        width: 100%;
+      }
+
+      .diff-row {
+        display: flex;
+        align-items: center;
+        background: var(--bg2);
+        border: 1px solid var(--faint);
+        border-radius: 8px;
+        padding: 16px 20px;
+        cursor: pointer;
+        gap: 16px;
+        transition: all 0.2s ease;
+      }
+
+      .diff-row:hover {
+        background: var(--bg3);
+      }
+
+      .diff-row.selected {
+        border-color: var(--purple);
+        background: var(--purple-pale);
+      }
+
+      .diff-dot-indicator {
+        display: flex;
+        gap: 4px;
+        width: 60px;
+        flex-shrink: 0;
+      }
+
+      .diff-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--muted);
+      }
+
+      .diff-dot.green { background: var(--green); }
+      .diff-dot.purple { background: var(--purple); }
+      .diff-dot.yellow { background: var(--yellow); }
+      .diff-dot.red { background: #ef4444; }
+
+      .diff-info {
+        flex-grow: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+      }
+
+      .diff-name {
+        font-size: 14px;
+        font-weight: 700;
+      }
+
+      .diff-desc {
+        font-size: 11px;
+        color: var(--muted);
+      }
+
+      .diff-bpm {
+        font-size: 12px;
+        color: var(--muted);
+        font-weight: 600;
+        width: 70px;
+        text-align: right;
+        flex-shrink: 0;
+      }
+
+      /* ═══════════════════════════════════════
+         MODO CÍRCULO DE ACORDES
+         ═══════════════════════════════════════ */
+      .circle-screen-layout {
+        display: grid;
+        grid-template-columns: 350px 1fr;
+        gap: 32px;
+        width: 100%;
+        max-width: 1100px;
+        height: 100%;
+        align-items: center;
+      }
+
+      .circle-sidebar {
+        display: flex;
+        flex-direction: column;
+        gap: 24px;
+        background: var(--bg2);
+        border: 1px solid var(--faint);
+        border-radius: 12px;
+        padding: 24px;
+        height: 100%;
+        justify-content: space-between;
+      }
+
+      .key-selector-pills {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 6px;
+      }
+
+      .key-pill {
+        background: var(--bg);
+        border: 1px solid var(--faint);
+        color: var(--muted);
+        border-radius: 6px;
+        padding: 8px 0;
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        text-align: center;
+        transition: all 0.2s;
+      }
+      .key-pill:hover {
+        border-color: var(--green);
+        color: var(--white);
+      }
+      .key-pill.active {
+        background: var(--green-pale);
+        border-color: var(--green);
+        color: var(--green);
+        font-weight: 700;
+      }
+
+      .progress-circle-wrap {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .progress-bar-container {
+        height: 6px;
+        background: var(--bg);
+        border-radius: 3px;
+        overflow: hidden;
+        width: 100%;
+      }
+
+      .progress-bar-fill {
+        height: 100%;
+        width: 0%;
+        background: var(--green);
+        transition: width var(--transition-speed) ease;
+      }
+
+      .circle-visualizer-container {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        width: 100%;
+        height: 480px;
+      }
+
+      .circle-degree-node {
+        position: absolute;
+        width: 76px;
+        height: 76px;
+        border-radius: 50%;
+        background: var(--bg2);
+        border: 2px solid var(--faint);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        z-index: 10;
+        transition: all 0.3s ease;
+      }
+
+      .circle-degree-node.tonica { border-color: var(--green); box-shadow: 0 0 12px rgba(34, 197, 94, 0.1); }
+      .circle-degree-node.dominante { border-color: var(--yellow); }
+      .circle-degree-node.tocado { border-color: var(--purple); background: var(--purple-pale); }
+      .circle-degree-node.pendiente { border-color: var(--faint); opacity: 0.6; }
+      .circle-degree-node.actual { border-color: var(--white); background: var(--bg3); scale: 1.08; box-shadow: 0 0 16px rgba(255,255,255,0.1); }
+
+      .node-chord { font-size: 14px; font-weight: 700; color: var(--white); }
+      .node-roman { font-size: 8px; color: var(--muted); text-transform: uppercase; margin-top: 1px; }
+
+      .horizontal-chord-sequence {
+        display: flex;
+        gap: 12px;
+        justify-content: center;
+        width: 100%;
+      }
+
+      .seq-item {
+        background: var(--bg2);
+        border: 1px solid var(--faint);
+        border-radius: 6px;
+        padding: 8px 16px;
+        font-size: 13px;
+        font-weight: 700;
+        color: var(--muted);
+        text-align: center;
+        position: relative;
+      }
+
+      .seq-item.completed {
+        border-color: var(--green);
+        color: var(--green);
+        background: var(--green-pale);
+      }
+
+      .seq-item.current {
+        border-color: var(--white);
+        color: var(--white);
+        background: var(--bg3);
+        box-shadow: 0 0 8px rgba(255,255,255,0.15);
+      }
+
+      /* ═══════════════════════════════════════
+         PANTALLA DE JUEGO (GAME VIEW)
+         ═══════════════════════════════════════ */
+      #game-view {
+        padding: 8px 12px;
+        justify-content: space-between;
+      }
+
+      /* HUD Afinador Horizontal */
+      #tuner-bar-hud {
+        width: 100%;
+        background: var(--bg2);
+        border: 1px solid var(--faint);
+        border-radius: 8px;
+        padding: 6px 16px;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        margin-bottom: 8px;
+        flex-shrink: 0;
+      }
+
+      .tuner-bar-label {
+        font-size: 8px;
+        color: var(--muted);
+        text-transform: uppercase;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+      }
+
+      .tuner-bar-scale-wrap {
+        flex-grow: 1;
+        height: 12px;
+        background: var(--bg);
+        border-radius: 6px;
+        position: relative;
+        overflow: visible;
+        border: 1px solid rgba(245, 240, 255, 0.03);
+      }
+
+      .tuner-bar-tick {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        width: 1.5px;
+        background: var(--muted);
+      }
+      .tuner-bar-tick.center {
+        left: 50%;
+        background: var(--green);
+        width: 2px;
+      }
+      .tuner-bar-tick.tick-left-30 { left: 20%; }
+      .tuner-bar-tick.tick-left-15 { left: 35%; }
+      .tuner-bar-tick.tick-right-15 { left: 65%; }
+      .tuner-bar-tick.tick-right-30 { left: 80%; }
+
+      #tuner-bar-pin {
+        position: absolute;
+        top: -4px;
+        bottom: -4px;
+        width: 8px;
+        background: var(--yellow);
+        border-radius: 4px;
+        left: 50%;
+        transform: translateX(-50%);
+        transition: left 0.1s ease-out;
+        box-shadow: 0 0 6px var(--yellow);
+      }
+
+      #tuner-bar-info {
+        font-size: 12px;
+        font-weight: 700;
+        color: var(--yellow);
+        width: 140px;
+        text-align: right;
+        display: flex;
+        justify-content: flex-end;
+        gap: 8px;
+      }
+
+      #tuner-bar-note {
+        color: var(--yellow);
+      }
+      #tuner-bar-cents {
+        color: var(--muted);
+        font-size: 10px;
+        align-self: flex-end;
+      }
+
+      /* Game HUD Header */
+      .hud-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        width: 100%;
+        margin-bottom: 6px;
+        flex-shrink: 0;
+      }
+
+      .hud-left-logo {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .pause-btn {
+        background: var(--bg2);
+        border: 1px solid var(--faint);
+        color: var(--white);
+        width: 28px;
+        height: 28px;
+        border-radius: 6px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+        transition: all 0.2s;
+      }
+      .pause-btn:hover {
+        background: var(--bg3);
+        border-color: var(--muted);
+      }
+
+      /* Phaser Container */
       #game-container {
         position: relative;
         width: 100%;
         flex-grow: 1;
-        border: 1px solid var(--game-border);
-        box-shadow: var(--game-shadow);
+        border: 1px solid var(--faint);
         border-radius: 12px;
         overflow: hidden;
-        background: var(--game-bg);
-        transition: border 0.4s ease, box-shadow 0.4s ease, background 0.4s ease;
+        background: var(--bg2);
       }
+
       #game-container canvas {
         display: block;
         width: 100%;
         height: 100%;
       }
 
-      /* ═══════════════════════════════════════
-         FOOTER & MIC STATUS
-         ═══════════════════════════════════════ */
-      #footer {
+      /* Game view Footer controls */
+      .game-footer {
         display: flex;
-        gap: 24px;
+        align-items: center;
+        justify-content: space-between;
         width: 100%;
-        justify-content: center;
+        padding-top: 8px;
         flex-shrink: 0;
-        padding: 4px 0;
       }
-      .hint {
+
+      .footer-controls-group {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+      }
+
+      /* BPM Slider Rediseñado */
+      .bpm-slider-container {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        background: var(--bg2);
+        border: 1px solid var(--faint);
+        border-radius: 8px;
+        padding: 6px 12px;
+      }
+
+      #bpm-slider-horizontal {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 120px;
+        height: 4px;
+        background: var(--bg);
+        border-radius: 2px;
+        outline: none;
+      }
+      #bpm-slider-horizontal::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: var(--white);
+        border: 2.5px solid var(--purple);
+        cursor: pointer;
+      }
+
+      #bpm-val-display {
+        font-size: 13px;
+        font-weight: 700;
+        color: var(--white);
+        min-width: 32px;
+      }
+
+      /* Beat indicator */
+      .beat-indicator-container {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .beat-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--faint);
+        transition: background-color 0.1s, box-shadow 0.1s;
+      }
+      .beat-dot.active {
+        background-color: var(--green);
+        box-shadow: 0 0 8px var(--green);
+      }
+
+      /* Hints */
+      .hints-row {
+        display: flex;
+        gap: 16px;
+      }
+
+      /* ═══════════════════════════════════════
+         PANTALLA GAME OVER (NUEVA HTML OVERLAY)
+         ═══════════════════════════════════════ */
+      .game-over-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 28px;
+        width: 100%;
+        max-width: 540px;
+        text-align: center;
+      }
+
+      .game-over-header {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+      }
+
+      .go-label {
         font-size: 9px;
-        color: var(--text-secondary);
-        font-weight: 500;
-        letter-spacing: 0.5px;
+        color: var(--muted);
         text-transform: uppercase;
-      }
-      .hint span {
-        color: var(--hint-accent);
+        letter-spacing: 1.5px;
         font-weight: 700;
       }
 
+      .go-score-large {
+        font-size: 52px;
+        font-weight: 800;
+        letter-spacing: -1px;
+        display: flex;
+        gap: 4px;
+        justify-content: center;
+      }
+      /* Coloreado dinámico */
+      .go-digit-purple { color: var(--purple); }
+      .go-digit-green { color: var(--green); }
+      .go-digit-yellow { color: var(--yellow); }
+
+      .record-badge {
+        background: var(--yellow-pale);
+        border: 1px solid var(--yellow-dim);
+        color: var(--yellow);
+        font-size: 9px;
+        font-weight: 700;
+        padding: 4px 10px;
+        border-radius: 12px;
+        margin-top: 8px;
+        display: inline-block;
+      }
+
+      .go-stats-cards {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px;
+        width: 100%;
+      }
+
+      .go-stat-card {
+        background: var(--bg2);
+        border: 1px solid var(--faint);
+        border-radius: 8px;
+        padding: 16px 8px;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+      .go-stat-card.purple { border-color: var(--purple-dim); }
+      .go-stat-card.green { border-color: var(--green-dim); }
+      .go-stat-card.yellow { border-color: var(--yellow-dim); }
+
+      .go-stat-val {
+        font-size: 20px;
+        font-weight: 800;
+      }
+      .go-stat-val.purple { color: var(--purple); }
+      .go-stat-val.green { color: var(--green); }
+      .go-stat-val.yellow { color: var(--yellow); }
+
+      .go-stat-lbl {
+        font-size: 8px;
+        color: var(--muted);
+        text-transform: uppercase;
+      }
+
+      .go-buttons {
+        display: flex;
+        gap: 16px;
+        width: 100%;
+      }
+      .go-buttons .btn {
+        flex: 1;
+      }
+
+      /* Mic Status Badge */
       #mic-status {
         position: fixed;
         bottom: 12px;
         right: 12px;
         padding: 5px 10px;
-        border: 1px solid var(--mic-border);
+        border: 1px solid var(--faint);
         border-radius: 6px;
-        font-family: 'JetBrains Mono', monospace;
         font-size: 8px;
         font-weight: 700;
-        color: var(--mic-color);
+        color: var(--muted);
         letter-spacing: 0.5px;
         text-transform: uppercase;
-        background: var(--mic-bg);
+        background: var(--bg2);
         z-index: 100;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
         display: flex;
         align-items: center;
         gap: 5px;
         transition: all 0.3s ease;
       }
       #mic-status.active {
-        border-color: var(--mic-active-border);
-        color: var(--mic-active-color);
-        background: var(--mic-active-bg);
+        border-color: var(--purple);
+        color: var(--purple);
+        background: var(--purple-pale);
       }
       #mic-status .dot {
         width: 4px;
@@ -479,196 +974,357 @@
         background: currentColor;
       }
 
-      /* ── Responsividad ── */
-      body {
-        height: 100vh;
-        height: 100dvh; /* Dynamic viewport height to prevent mobile safari/chrome cutoff */
-      }
-
-      @media (max-width: 768px) {
-        body {
-          padding: 12px 16px;
+      /* Responsive Media Queries */
+      @media (max-width: 820px) {
+        .circle-screen-layout {
+          grid-template-columns: 1fr;
+          grid-template-rows: auto 1fr;
+          height: auto;
+          overflow-y: auto;
         }
-        #game-wrapper {
+        .circle-sidebar {
+          height: auto;
+          gap: 16px;
+        }
+        .mode-cards {
+          grid-template-columns: 1fr;
           gap: 12px;
         }
-        #header {
-          flex-direction: column;
-          gap: 12px;
-          align-items: center;
-          text-align: center;
-        }
-        #controls-group {
-          width: 100%;
-          justify-content: center;
-          flex-wrap: wrap;
-          gap: 10px;
-        }
-      }
-
-      @media (max-width: 540px) {
-        body {
-          padding: 8px 10px;
-        }
-        #game-wrapper {
-          gap: 8px;
-        }
-        #title {
-          font-size: 18px;
-        }
-        #subtitle {
-          font-size: 8px;
-          letter-spacing: 0.5px;
-        }
-        #controls-group {
-          gap: 8px;
-        }
-        .control-panel {
-          padding: 6px 10px;
-          gap: 8px;
-          border-radius: 6px;
-        }
-        .panel-label {
-          font-size: 7px;
-          letter-spacing: 0.5px;
-        }
-        #tuner-note {
-          font-size: 15px;
-          min-width: 22px;
-        }
-        .tuner-gauge-wrap {
-          width: 60px;
-        }
-        #bpm-input {
-          font-size: 12px;
-          width: 38px;
-          height: 22px;
-        }
-        #bpm-slider {
-          width: 40px;
-        }
-        .bpm-btn {
-          width: 14px;
-          height: 10px;
-        }
-        #metronome-toggle, #theme-toggle, #notation-toggle {
-          height: 22px;
-        }
-        #notation-toggle {
-          font-size: 8px;
-          padding: 0 6px;
-        }
-        #footer {
-          flex-direction: column;
-          align-items: center;
-          gap: 4px;
-          padding: 2px 0;
-        }
-        .hint {
-          font-size: 8px;
-        }
-        #mic-status {
-          bottom: 6px;
-          right: 6px;
-          padding: 4px 8px;
-          font-size: 7px;
-        }
-      }
-
-      /* Optimizaciones para pantallas muy bajas (ej: móviles en horizontal) */
-      @media (max-height: 520px) {
-        body {
-          padding: 6px 8px;
-        }
-        #game-wrapper {
-          gap: 6px;
-        }
-        #header {
-          flex-direction: row;
-          justify-content: space-between;
-          gap: 6px;
-        }
-        #subtitle {
-          display: none;
-        }
-        #title {
-          font-size: 15px;
-        }
-        #controls-group {
-          width: auto;
-          gap: 6px;
-        }
-        .control-panel {
-          padding: 4px 8px;
-          gap: 6px;
-        }
-        #footer {
-          display: none; /* Ocultar footer en pantalla horizontal baja para dar espacio al juego */
+        .hero-title {
+          font-size: 42px;
         }
       }
     </style>
   </head>
   <body>
-    <div id="game-wrapper">
-      <!-- ═══ HEADER ═══ -->
-      <div id="header">
-        <div id="brand">
-          <div id="title">Chord Strike</div>
-          <div id="subtitle">Analog Tuning & Training</div>
+    <!-- 🎸 DECORACIÓN DE CUERDAS DE FONDO -->
+    <div class="guitar-strings-bg">
+      <div class="guitar-string-line"></div>
+      <div class="guitar-string-line"></div>
+      <div class="guitar-string-line"></div>
+      <div class="guitar-string-line"></div>
+      <div class="guitar-string-line"></div>
+      <div class="guitar-string-line"></div>
+    </div>
+
+    <!-- ═══ PANTALLA 1: INICIO (HERO) ═══ -->
+    <div id="start-screen" class="screen active">
+      <div class="navbar">
+        <div class="logo">
+          <span class="logo-chord">Chord</span><span class="logo-strike">Strike</span>
         </div>
-
-        <div id="controls-group">
-          <!-- Tuner Panel (Warm Minimalist VU Style) -->
-          <div id="tuner-panel" class="control-panel">
-            <span class="panel-label">Tuner</span>
-            <div id="tuner-note">-</div>
-            <div class="tuner-gauge-wrap">
-              <svg class="tuner-svg" viewBox="0 0 100 50">
-                <!-- Scale Arc -->
-                <path d="M 20 45 A 30 30 0 0 1 80 45" fill="none" stroke="var(--divider)" stroke-width="2.5" stroke-linecap="round"/>
-                <!-- Center Tick -->
-                <line x1="50" y1="15" x2="50" y2="22" stroke="var(--text-accent)" stroke-width="1.5"/>
-                <!-- Dynamic Needle -->
-                <line id="tuner-needle" x1="50" y1="45" x2="50" y2="18" stroke="var(--text-primary)" stroke-width="2" stroke-linecap="round"/>
-                <!-- Center knob -->
-                <circle cx="50" cy="45" r="3" fill="var(--bg-secondary)" stroke="var(--text-secondary)" stroke-width="1"/>
-              </svg>
-              <div id="tuner-hz">0.0 Hz</div>
-            </div>
-          </div>
-
-          <!-- Tempo control -->
-          <div id="bpm-panel" class="control-panel">
-            <span class="panel-label">BPM</span>
-            <div class="bpm-display-wrap">
-              <input type="number" id="bpm-input" min="10" max="250" value="60" />
-              <div class="bpm-controls">
-                <button id="bpm-plus" class="bpm-btn">▲</button>
-                <button id="bpm-minus" class="bpm-btn">▼</button>
-              </div>
-            </div>
-            <input type="range" id="bpm-slider" min="10" max="250" value="60" />
-            <button id="metronome-toggle" title="Activar metrónomo">🔇</button>
-          </div>
-
-          <!-- Theme & Notation -->
-          <div style="display: flex; gap: 8px; align-items: center;">
-            <button id="notation-toggle" title="Cambiar cifrado musical">CIFRADO: DO RE MI</button>
-            <button id="theme-toggle" title="Cambiar tema">🌙</button>
-          </div>
+        <div class="nav-links" style="display: flex; align-items: center; gap: 16px;">
+          <a href="#" class="nav-link">Tutorial</a>
+          <a href="#" class="nav-link">Ajustes</a>
+          <button id="theme-toggle" class="btn btn-ghost" style="padding: 4px 8px; font-size: 14px;">🌙</button>
         </div>
       </div>
 
-      <!-- ═══ GAME AREA ═══ -->
-      <div id="game-container">
-        <!-- Phaser mounts canvas here -->
+      <div class="hero-content">
+        <h1 class="hero-title">
+          <span>Toca.</span>
+          <span class="title-purple">Afina.</span>
+          <span class="title-green">Gana.</span>
+        </h1>
+        <p class="hero-subtitle">
+          El primer entrenador interactivo que utiliza tu instrumento real. Haz explotar burbujas de notas tocando tu guitarra, bajo o cantando frente al micrófono.
+        </p>
+        <div class="hero-buttons">
+          <button id="hero-start-btn" class="btn">Comenzar</button>
+        </div>
       </div>
 
-      <!-- ═══ FOOTER ═══ -->
-      <div id="footer">
-        <div class="hint"><span>Click</span> para reventar notas</div>
-        <div class="hint">No dejes pasar notas a la <span>zona crítica</span></div>
-        <div class="hint"><span>Micrófono</span> afinación en vivo</div>
+      <div class="stats-strip">
+        <div class="stat-item">
+          <span class="stat-num mono">100%</span>
+          <span class="stat-label">Audio Real</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-num mono">108</span>
+          <span class="stat-label">Acordes Soportados</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-num mono">&lt; 15ms</span>
+          <span class="stat-label">Latencia Zero</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ PANTALLA 2: SELECTOR DE MODO ═══ -->
+    <div id="mode-screen" class="screen hidden">
+      <div class="mode-container">
+        <div class="section-header">
+          <h2>Elige tu modo</h2>
+          <p>Selecciona la forma en que quieres practicar o competir hoy.</p>
+        </div>
+
+        <div class="mode-cards">
+          <!-- Arcade Card -->
+          <div id="card-arcade" class="mode-card arcade-mode">
+            <div class="card-top">
+              <span class="card-title">Arcade</span>
+              <span class="badge" style="background: var(--purple-pale); color: var(--purple);">Clásico</span>
+            </div>
+            <p class="card-desc">Destruye notas y acordes en movimiento. No dejes que superen la zona crítica. ¡Suma combos y gana vidas!</p>
+            <div class="card-tags">
+              <span class="tag">Notas Sueltas</span>
+              <span class="tag">Acordes</span>
+              <span class="tag">HP + Combos</span>
+            </div>
+          </div>
+
+          <!-- Chord Circle Card -->
+          <div id="card-circle" class="mode-card circle-mode">
+            <div class="card-top">
+              <span class="card-title">Círculo Armónico</span>
+              <span class="badge" style="background: var(--green-pale); color: var(--green);">Nuevo</span>
+            </div>
+            <p class="card-desc">Domina las tonalidades. Toca los 7 grados diatónicos en círculo en orden para aprender teoría armónica real.</p>
+            <div class="card-tags">
+              <span class="tag">7 Tonalidades</span>
+              <span class="tag">Sin Prisa</span>
+              <span class="tag">Guía Visual</span>
+            </div>
+          </div>
+
+          <!-- Free Practice Card -->
+          <div id="card-free" class="mode-card free-mode">
+            <div class="card-top">
+              <span class="card-title">Práctica Libre</span>
+              <span class="badge" style="background: var(--yellow-pale); color: var(--yellow);">Aprende</span>
+            </div>
+            <p class="card-desc">Ideal para estudiar con calma. Las notas descienden y se congelan en la zona crítica hasta que toques el tono correcto.</p>
+            <div class="card-tags">
+              <span class="tag">Pausa Automática</span>
+              <span class="tag">Cualquier Tempo</span>
+              <span class="tag">Feedback</span>
+            </div>
+          </div>
+        </div>
+
+        <button id="mode-back-btn" class="btn btn-ghost">Volver</button>
+      </div>
+    </div>
+
+    <!-- ═══ PANTALLA 3: SELECTOR DE DIFICULTAD (ARCADE) ═══ -->
+    <div id="difficulty-screen" class="screen hidden">
+      <div class="difficulty-container">
+        <div class="section-header">
+          <h2>Dificultad</h2>
+          <p>Ajusta el nivel de la sesión según tu habilidad en el instrumento.</p>
+        </div>
+
+        <div class="diff-list">
+          <div class="diff-row selected" data-diff="beginner">
+            <div class="diff-dot-indicator">
+              <div class="diff-dot green"></div>
+            </div>
+            <div class="diff-info">
+              <span class="diff-name">Principiante</span>
+              <span class="diff-desc">Solo caen notas sueltas. Perfecto para calentar.</span>
+            </div>
+            <span class="diff-bpm mono">60 BPM</span>
+          </div>
+
+          <div class="diff-row" data-diff="intermediate">
+            <div class="diff-dot-indicator">
+              <div class="diff-dot purple"></div>
+              <div class="diff-dot purple"></div>
+            </div>
+            <div class="diff-info">
+              <span class="diff-name">Intermedio</span>
+              <span class="diff-desc">Notas sueltas y acordes mayores/menores básicos.</span>
+            </div>
+            <span class="diff-bpm mono">100 BPM</span>
+          </div>
+
+          <div class="diff-row" data-diff="advanced">
+            <div class="diff-dot-indicator">
+              <div class="diff-dot yellow"></div>
+              <div class="diff-dot yellow"></div>
+              <div class="diff-dot yellow"></div>
+            </div>
+            <div class="diff-info">
+              <span class="diff-name">Avanzado</span>
+              <span class="diff-desc">Añade acordes extendidos y velocidad acelerada.</span>
+            </div>
+            <span class="diff-bpm mono">150 BPM</span>
+          </div>
+
+          <div class="diff-row" data-diff="master">
+            <div class="diff-dot-indicator">
+              <div class="diff-dot red"></div>
+              <div class="diff-dot red"></div>
+              <div class="diff-dot red"></div>
+              <div class="diff-dot red"></div>
+            </div>
+            <div class="diff-info">
+              <span class="diff-name">Maestro</span>
+              <span class="diff-desc">El set completo de 108 acordes. Un verdadero reto.</span>
+            </div>
+            <span class="diff-bpm mono">200 BPM</span>
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 16px; width: 100%; margin-top: 12px;">
+          <button id="diff-back-btn" class="btn btn-ghost" style="flex: 1;">Atrás</button>
+          <button id="diff-start-btn" class="btn" style="flex: 2;">Comenzar Partida</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ PANTALLA 4: MODO CÍRCULO ARMÓNICO (INTERACTIVA) ═══ -->
+    <div id="chord-circle-screen" class="screen hidden">
+      <div class="circle-screen-layout">
+        <!-- Sidebar de Control -->
+        <div class="circle-sidebar">
+          <div>
+            <h2 style="font-size: 20px; font-weight: 800; margin-bottom: 8px;">Círculo Armónico</h2>
+            <p style="color: var(--muted); font-size: 11px; margin-bottom: 16px;">Practica y aprende las funciones de los acordes diatónicos.</p>
+
+            <h3 style="font-size: 11px; text-transform: uppercase; color: var(--muted); margin-bottom: 8px;">Tonalidad</h3>
+            <div class="key-selector-pills">
+              <div class="key-pill active" data-key="Do">Do</div>
+              <div class="key-pill" data-key="Re">Re</div>
+              <div class="key-pill" data-key="Mi">Mi</div>
+              <div class="key-pill" data-key="Fa">Fa</div>
+              <div class="key-pill" data-key="Sol">Sol</div>
+              <div class="key-pill" data-key="La">La</div>
+              <div class="key-pill" data-key="Si">Si</div>
+            </div>
+          </div>
+
+          <div class="progress-circle-wrap">
+            <div style="display: flex; justify-content: space-between; font-size: 11px;">
+              <span style="color: var(--muted);">Progreso de la guía</span>
+              <span id="circle-progress-text" class="mono" style="color: var(--green); font-weight: 700;">0 / 7</span>
+            </div>
+            <div class="progress-bar-container">
+              <div id="circle-progress-bar" class="progress-bar-fill"></div>
+            </div>
+          </div>
+
+          <div style="display: flex; flex-direction: column; gap: 8px;">
+            <button id="circle-guide-btn" class="btn btn-green">Iniciar Guía</button>
+            <button id="circle-back-btn" class="btn btn-ghost">Salir al Menú</button>
+          </div>
+        </div>
+
+        <!-- Círculo e Interfaz Gráfica -->
+        <div style="display: flex; flex-direction: column; gap: 24px; align-items: center; justify-content: center; height: 100%;">
+          <div class="circle-visualizer-container" id="circle-viz-area">
+            <!-- Nodos y líneas generadas dinámicamente -->
+            <svg id="circle-svg-lines" style="position: absolute; width: 100%; height: 100%; top: 0; left: 0; pointer-events: none; z-index: 1;"></svg>
+            <!-- Centro visual -->
+            <div style="position: absolute; width: 20px; height: 20px; border-radius: 50%; background: var(--green); box-shadow: 0 0 16px var(--green); z-index: 2;"></div>
+          </div>
+
+          <!-- Secuencia inferior -->
+          <div class="horizontal-chord-sequence" id="circle-sequence-strip">
+            <!-- Items de acorde -->
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ PANTALLA 5: VISTA DE JUEGO (GAMEPLAY) ═══ -->
+    <div id="game-view" class="screen hidden">
+      <!-- ── BARRA DEL AFINADOR PERMANENTE ── -->
+      <div id="tuner-bar-hud">
+        <span class="tuner-bar-label">Afinador</span>
+        <div class="tuner-bar-scale-wrap">
+          <div class="tuner-bar-tick tick-left-30"></div>
+          <div class="tuner-bar-tick tick-left-15"></div>
+          <div class="tuner-bar-tick center"></div>
+          <div class="tuner-bar-tick tick-right-15"></div>
+          <div class="tuner-bar-tick tick-right-30"></div>
+          <div id="tuner-bar-pin"></div>
+        </div>
+        <div id="tuner-bar-info">
+          <span id="tuner-bar-note">-</span>
+          <span id="tuner-bar-cents">+0c</span>
+        </div>
+      </div>
+
+      <!-- Topbar Header -->
+      <div class="hud-header">
+        <div class="hud-left-logo" style="display: flex; align-items: center; gap: 8px;">
+          <button id="game-back-btn" class="pause-btn" title="Volver al menú">◀</button>
+          <button id="game-pause-btn" class="pause-btn" title="Pausar juego">⏸</button>
+          <div class="logo" style="font-size: 16px;">
+            <span class="logo-chord">Chord</span><span class="logo-strike">Strike</span>
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 8px;">
+          <button id="game-notation-toggle" class="btn btn-ghost" style="font-size: 9px; padding: 4px 10px; height: 28px;">CIFRADO: DO RE MI</button>
+          <button id="game-theme-toggle" class="btn btn-ghost" style="font-size: 11px; padding: 0; width: 28px; height: 28px;">🌙</button>
+        </div>
+      </div>
+
+      <!-- Phaser Canvas Container -->
+      <div id="game-container"></div>
+
+      <!-- Game Footer Controls -->
+      <div class="game-footer">
+        <div class="footer-controls-group">
+          <!-- BPM Slider -->
+          <div class="bpm-slider-container">
+            <span class="stat-label">BPM</span>
+            <input type="range" id="bpm-slider-horizontal" min="10" max="250" value="60" />
+            <span id="bpm-val-display" class="mono">60</span>
+          </div>
+
+          <!-- Beat Metronome Indicator -->
+          <div class="beat-indicator-container">
+            <div id="metronome-beat-dot" class="beat-dot"></div>
+            <button id="game-metronome-toggle" class="pause-btn" style="width: 24px; height: 24px; font-size: 9px;" title="Metrónomo">🔇</button>
+          </div>
+        </div>
+
+        <div class="hints-row">
+          <div class="hint"><span>Click</span> / Toca nota</div>
+          <div class="hint">No dejes pasar burbujas a la <span>zona crítica</span></div>
+          <div class="hint"><span>Micrófono</span> afinación real</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ PANTALLA 6: GAME OVER (HTML OVERLAY) ═══ -->
+    <div id="game-over-screen" class="screen hidden">
+      <div class="game-over-container">
+        <div class="game-over-header">
+          <span class="go-label">Sesión terminada</span>
+          <div class="go-score-large mono">
+            <span class="go-digit-purple" id="go-score-p1">0</span>
+            <span class="go-digit-green" id="go-score-p2">0</span>
+            <span class="go-digit-yellow" id="go-score-p3">0</span>
+            <span id="go-score-rest" style="color: var(--white);">000</span>
+          </div>
+          <div id="personal-record-badge" class="record-badge hidden">🏆 ¡Nuevo récord personal!</div>
+        </div>
+
+        <!-- 3 Tarjetas de Estadísticas -->
+        <div class="go-stats-cards">
+          <div class="go-stat-card purple">
+            <span id="stat-notes" class="go-stat-val purple mono">0</span>
+            <span class="go-stat-lbl">Notas totales</span>
+          </div>
+          <div class="go-stat-card green">
+            <span id="stat-accuracy" class="go-stat-val green mono">0%</span>
+            <span class="go-stat-lbl">Precisión</span>
+          </div>
+          <div class="go-stat-card yellow">
+            <span id="stat-combo" class="go-stat-val yellow mono">0</span>
+            <span class="go-stat-lbl">Mejor combo</span>
+          </div>
+        </div>
+
+        <!-- Botones de Acción -->
+        <div class="go-buttons">
+          <button id="go-retry-btn" class="btn">Reintentar</button>
+          <button id="go-menu-btn" class="btn btn-ghost">Menú Principal</button>
+        </div>
       </div>
     </div>
 

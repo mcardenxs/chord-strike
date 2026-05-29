@@ -15,20 +15,23 @@
 import Phaser from 'phaser'
 
 // ──────────────────────────────────────────────
-// Theme colors
+// Theme colors (Nueva Paleta Oscura)
 // ──────────────────────────────────────────────
-const DARK_BG = 0x181716       // Obsidian Charcoal
-const DARK_GRID = 0x262422     // Warm Sand Charcoal
-const DARK_STAVE = 0xd05a3f    // Terracotta
-const LIGHT_BG = 0xf5f3ee      // Alabaster Cream
-const LIGHT_GRID = 0xebe8e0    // Warm light sand
-const LIGHT_STAVE = 0xb2482f   // Deep Terracotta
-const ACCENT_GOLD = 0xd05a3f    // Terracotta clay
-const ACCENT_RED = 0xb2482f     // Crimson Terracotta
-const ACCENT_TEAL = 0x2c2a29    // Dark Charcoal
-const ACCENT_MAGENTA = 0xb2482f
-const ACCENT_AMBER = 0xd05a3f
-
+const COLOR_BG = 0x0e0c14
+const COLOR_BG2 = 0x16121f
+const COLOR_BG3 = 0x1e1828
+const COLOR_PURPLE = 0xa855f7
+const COLOR_PURPLE_DIM = 0x7c3aed
+const COLOR_PURPLE_PALE = 0x2d1f4a
+const COLOR_GREEN = 0x22c55e
+const COLOR_GREEN_DIM = 0x16a34a
+const COLOR_GREEN_PALE = 0x0f2a1a
+const COLOR_YELLOW = 0xfacc15
+const COLOR_YELLOW_DIM = 0xca8a04
+const COLOR_YELLOW_PALE = 0x2a2000
+const COLOR_WHITE = 0xf5f0ff
+const COLOR_MUTED = 0x6b5f8a
+const COLOR_FAINT = 0x2a2040
 
 // ──────────────────────────────────────────────
 // Tipos y constantes
@@ -44,13 +47,13 @@ interface NoteData {
 
 /** Paleta de notas disponibles con sus propiedades visuales (escala cromática vibrante) */
 const NOTE_TYPES: NoteData[] = [
-  { name: 'Do',  color: 0xff3b30, glow: '#ff3b30', points: 100 }, // Do (Rojo)
-  { name: 'Re',  color: 0xff9500, glow: '#ff9500', points: 150 }, // Re (Naranja)
-  { name: 'Mi',  color: 0xffcc00, glow: '#ffcc00', points: 120 }, // Mi (Amarillo)
-  { name: 'Fa',  color: 0x4cd964, glow: '#4cd964', points: 130 }, // Fa (Verde)
-  { name: 'Sol',  color: 0x5ac8fa, glow: '#5ac8fa', points: 110 }, // Sol (Cian)
-  { name: 'La',  color: 0x007aff, glow: '#007aff', points: 140 }, // La (Azul)
-  { name: 'Si',  color: 0xff2d55, glow: '#ff2d55', points: 160 }, // Si (Violeta/Rosa)
+  { name: 'Do',  color: COLOR_PURPLE, glow: '#a855f7', points: 100 },
+  { name: 'Re',  color: COLOR_GREEN, glow: '#22c55e', points: 150 },
+  { name: 'Mi',  color: COLOR_YELLOW, glow: '#facc15', points: 120 },
+  { name: 'Fa',  color: COLOR_PURPLE_DIM, glow: '#7c3aed', points: 130 },
+  { name: 'Sol',  color: COLOR_GREEN_DIM, glow: '#16a34a', points: 110 },
+  { name: 'La',  color: COLOR_YELLOW_DIM, glow: '#ca8a04', points: 140 },
+  { name: 'Si',  color: COLOR_WHITE, glow: '#f5f0ff', points: 160 },
 ]
 
 /** Datos de un acorde en el juego */
@@ -62,15 +65,42 @@ interface ChordData {
   points: number;      // Puntos al completarlo
 }
 
-/** Tipos de acordes diatónicos en la escala de Do Mayor con colores cromáticos coincidentes */
-const CHORD_TYPES: ChordData[] = [
-  { name: 'Do',   notes: ['Do', 'Mi', 'Sol'], color: 0xff3b30, glow: '#ff3b30', points: 300 }, // Do Mayor
-  { name: 'Rem',  notes: ['Re', 'Fa', 'La'], color: 0xff9500, glow: '#ff9500', points: 350 }, // Re Menor
-  { name: 'Mim',  notes: ['Mi', 'Sol', 'Si'], color: 0xffcc00, glow: '#ffcc00', points: 320 }, // Mi Menor
-  { name: 'Fa',   notes: ['Fa', 'La', 'Do'], color: 0x4cd964, glow: '#4cd964', points: 340 }, // Fa Mayor
-  { name: 'Sol',  notes: ['Sol', 'Si', 'Re'], color: 0x5ac8fa, glow: '#5ac8fa', points: 310 }, // Sol Mayor
-  { name: 'Lam',  notes: ['La', 'Do', 'Mi'], color: 0x007aff, glow: '#007aff', points: 330 }, // La Menor
-]
+/** Generador programático del set completo de 108 acordes */
+const CHORD_TYPES: ChordData[] = []
+const ROOT_NOTE_NAMES = ['Do', 'Do#', 'Re', 'Re#', 'Mi', 'Fa', 'Fa#', 'Sol', 'Sol#', 'La', 'La#', 'Si']
+const CHORD_INTERVALS: { [suffix: string]: number[] } = {
+  "": [0, 4, 7],         // Mayor
+  "m": [0, 3, 7],        // Menor
+  "7": [0, 4, 7, 10],     // 7 dominante
+  "maj7": [0, 4, 7, 11],   // 7 mayor
+  "m7": [0, 3, 7, 10],    // 7 menor
+  "dim": [0, 3, 6],       // Disminuido
+  "aug": [0, 4, 8],       // Aumentado
+  "sus4": [0, 5, 7],      // Sus4
+  "sus2": [0, 2, 7]       // Sus2
+}
+
+const ROOT_COLORS: { [note: string]: number } = {
+  'Do': COLOR_PURPLE, 'Do#': COLOR_PURPLE_DIM, 'Re': COLOR_GREEN, 'Re#': COLOR_GREEN_DIM,
+  'Mi': COLOR_YELLOW, 'Fa': COLOR_PURPLE, 'Fa#': COLOR_PURPLE_DIM, 'Sol': COLOR_GREEN,
+  'Sol#': COLOR_GREEN_DIM, 'La': COLOR_YELLOW, 'La#': COLOR_WHITE, 'Si': COLOR_WHITE
+}
+
+for (let r = 0; r < 12; r++) {
+  const root = ROOT_NOTE_NAMES[r]
+  const color = ROOT_COLORS[root] || COLOR_PURPLE
+  
+  for (const [suffix, intervals] of Object.entries(CHORD_INTERVALS)) {
+    const chordNotes = intervals.map(interval => ROOT_NOTE_NAMES[(r + interval) % 12])
+    CHORD_TYPES.push({
+      name: `${root}${suffix}`,
+      notes: chordNotes,
+      color: color,
+      glow: `#${color.toString(16)}`,
+      points: 300 + intervals.length * 50
+    })
+  }
+}
 
 const OCTAVES = [3, 4, 5]            // Octavas posibles
 const NOTE_RADIUS = 28               // Radio del círculo base
@@ -97,6 +127,14 @@ export default class GameScene extends Phaser.Scene {
   private lanes: number[] = []        // Carriles calculados dinámicamente
   private currentTheme: string = 'dark' // Tema actual ('light' o 'dark')
   private currentNotation: 'latin' | 'american' = 'latin' // Cifrado actual
+  
+  // — Nuevos Estados de Modos y Estadísticas —
+  private isPlaying: boolean = false
+  private gameMode: 'arcade' | 'practice' = 'arcade'
+  private notesSpawned: number = 0
+  private notesHit: number = 0
+  private maxComboReached: number = 0
+  private metronomeAudioContext: AudioContext | null = null
 
   // — Grupos de objetos —
   private notesGroup!: Phaser.GameObjects.Group
@@ -115,6 +153,7 @@ export default class GameScene extends Phaser.Scene {
   private bgGraphics!: Phaser.GameObjects.Graphics
   private dangerLineGraphics!: Phaser.GameObjects.Graphics
   private stringsGraphics!: Phaser.GameObjects.Graphics
+  private hpGraphics!: Phaser.GameObjects.Graphics
   private laneVibrations: number[] = [0, 0, 0, 0, 0, 0]
 
   constructor() {
@@ -146,6 +185,7 @@ export default class GameScene extends Phaser.Scene {
     this.bgGraphics = undefined as any
     this.dangerLineGraphics = undefined as any
     this.stringsGraphics = undefined as any
+    this.hpGraphics = undefined as any
     this.laneVibrations = [0, 0, 0, 0, 0, 0]
     this.scoreLabel = undefined as any
     this.scoreText = undefined as any
@@ -178,6 +218,9 @@ export default class GameScene extends Phaser.Scene {
     // ── Hilos / Cuerdas de guitarra ──
     this.stringsGraphics = this.add.graphics()
 
+    // ── Gráficos del HP (Escudos) ──
+    this.hpGraphics = this.add.graphics()
+
     // ── Línea de peligro en la parte de abajo ──
     this.createDangerLine(width, height)
 
@@ -192,6 +235,21 @@ export default class GameScene extends Phaser.Scene {
 
     // ── Game Over overlay (oculto al inicio) ──
     this.createGameOverScreen(width, height)
+
+    // ── Resumen de AudioContext para el metrónomo en cualquier click/toque de la ventana ──
+    const resumeAudio = () => {
+      const ctx = this.getMetronomeContext()
+      if (ctx && ctx.state === 'suspended') {
+        ctx.resume().catch(() => {})
+      }
+      
+      const phaserCtx = (this.sound as any).context as AudioContext
+      if (phaserCtx && phaserCtx.state === 'suspended') {
+        phaserCtx.resume().catch(() => {})
+      }
+    }
+    window.addEventListener('click', resumeAudio)
+    window.addEventListener('touchstart', resumeAudio)
 
     // ── Input: click en cualquier punto de la escena ──
     // El hit detection se hace en el update comparando posición
@@ -215,17 +273,28 @@ export default class GameScene extends Phaser.Scene {
     // ── Escuchar cambios de cifrado (cuerda/notación) ──
     this.game.events.on('notation-changed', this.handleNotationChanged, this)
 
+    // ── Escuchar inicio de partida ──
+    this.game.events.on('game-start', this.handleGameStart, this)
+
+    // ── Escuchar parada de partida ──
+    this.game.events.on('game-stop', this.handleGameStop, this)
+
     // ── Escuchar cambio de tamaño de pantalla ──
     this.scale.on('resize', this.handleResize, this)
 
     // Apagar la escucha al reiniciar o cerrar la escena para evitar duplicación
     this.events.once('shutdown', () => {
+      window.removeEventListener('click', resumeAudio)
+      window.removeEventListener('touchstart', resumeAudio)
+      
+      this.game.events.off('game-stop', this.handleGameStop, this)
       this.game.events.off('note-detected', this.handleNoteDetected, this)
       this.game.events.off('chord-detected', this.handleChordDetected, this)
       this.game.events.off('bpm-changed', this.handleBpmChanged, this)
       this.game.events.off('metronome-toggled', this.handleMetronomeToggled, this)
       this.game.events.off('theme-changed', this.handleThemeChanged, this)
       this.game.events.off('notation-changed', this.handleNotationChanged, this)
+      this.game.events.off('game-start', this.handleGameStart, this)
       this.scale.off('resize', this.handleResize, this)
     })
 
@@ -236,7 +305,10 @@ export default class GameScene extends Phaser.Scene {
   // UPDATE: loop principal (llamado ~60fps)
   // ─────────────────────────────────────────
   update(_time: number, delta: number): void {
-    if (this.isGameOver) return
+    if (!this.isPlaying || this.isGameOver) return
+
+    // Si la pantalla es demasiado pequeña, esperar a que se redimensione
+    if (this.scale.width <= 100 || this.scale.height <= 100) return
 
     // — Spawn de notas por timer manual —
     this.spawnTimer += delta
@@ -255,11 +327,17 @@ export default class GameScene extends Phaser.Scene {
     this.notesGroup.getChildren().forEach((obj) => {
       const note = obj as Phaser.GameObjects.Container
       const speed = note.getData('speed') as number
+      const dangerY = this.scale.height - 50
 
-      // Mover hacia abajo según velocidad y delta time
-      note.y += speed * (delta / 1000)
+      if (this.gameMode === 'practice' && note.y >= dangerY) {
+        // En práctica libre, congelar la nota en la zona crítica esperando al usuario
+        note.y = dangerY
+      } else {
+        // Mover hacia abajo
+        note.y += speed * (delta / 1000)
+      }
 
-      // Si pasó la línea de peligro → perder HP
+      // Si pasó la línea de peligro → miss
       if (note.y >= this.scale.height - 20) {
         this.noteEscaped(note)
       }
@@ -274,8 +352,7 @@ export default class GameScene extends Phaser.Scene {
   private drawStrings(): void {
     if (!this.stringsGraphics) return
     this.stringsGraphics.clear()
-    const isLight = this.currentTheme === 'light'
-    const stringColor = isLight ? LIGHT_STAVE : DARK_STAVE
+    const stringColor = COLOR_MUTED
     const h = this.scale.height
 
     this.lanes.forEach((laneX, index) => {
@@ -307,12 +384,12 @@ export default class GameScene extends Phaser.Scene {
     this.bgGraphics.clear()
 
     const isLight = this.currentTheme === 'light'
-    const bgColor = isLight ? LIGHT_BG : DARK_BG
-    const gridColor = isLight ? LIGHT_GRID : DARK_GRID
-    const gridAlphaH = isLight ? 0.04 : 0.06
-    const gridAlphaV = 0.04
-    const staveColor = isLight ? LIGHT_STAVE : DARK_STAVE
-    const staveAlpha = isLight ? 0.4 : 0.45
+    const bgColor = isLight ? 0xfaf8f5 : COLOR_BG
+    const gridColor = isLight ? 0xe6ded3 : COLOR_FAINT
+    const gridAlphaH = isLight ? 0.35 : 0.06
+    const gridAlphaV = isLight ? 0.25 : 0.04
+    const staveColor = isLight ? 0x8b7d9b : COLOR_MUTED
+    const staveAlpha = isLight ? 0.5 : 0.35
 
     // Fondo principal sólido
     this.bgGraphics.fillStyle(bgColor, 1)
@@ -321,8 +398,8 @@ export default class GameScene extends Phaser.Scene {
     // Radial gradient overlay — subtle lighter center for depth
     const centerX = w / 2
     const centerY = h / 2
-    const glowColor = isLight ? 0xffffff : 0x1a1a2e
-    const glowAlpha = isLight ? 0.3 : 0.25
+    const glowColor = 0x16121f // --bg2
+    const glowAlpha = 0.25
     const numRings = 8
     const maxRadius = Math.max(w, h) * 0.5
     for (let i = numRings; i >= 1; i--) {
@@ -346,7 +423,6 @@ export default class GameScene extends Phaser.Scene {
     })
 
     // ── DIBUJAR PENTAGRAMA (5 líneas horizontales) ──
-    // Se colocan en el centro vertical de la pantalla con un espaciado de 28px
     const staveCenterY = h / 2
     this.bgGraphics.lineStyle(1.5, staveColor, staveAlpha)
     for (let i = -2; i <= 2; i++) {
@@ -355,12 +431,11 @@ export default class GameScene extends Phaser.Scene {
     }
 
     // Add treble clef symbol at the left edge of staff lines for musical flavor
-    // Remove old clef text if it exists (stored on the graphics object as a custom property)
     const existingClef = (this.bgGraphics as any)._clefText as Phaser.GameObjects.Text | undefined
     if (existingClef) {
       existingClef.destroy()
     }
-    const clefColor = isLight ? 'rgba(178, 72, 47, 0.25)' : 'rgba(208, 90, 63, 0.35)'
+    const clefColor = isLight ? 'rgba(147, 51, 234, 0.35)' : 'rgba(168, 85, 247, 0.25)' // --purple with transparency
     const clefText = this.add.text(18, staveCenterY, '𝄞', {
       fontFamily: 'serif',
       fontSize: '48px',
@@ -377,6 +452,9 @@ export default class GameScene extends Phaser.Scene {
     }
     this.dangerLineGraphics.clear()
 
+    const isLight = this.currentTheme === 'light'
+    const dangerColor = isLight ? 0xca8a04 : COLOR_PURPLE // Use gold on light mode, purple on dark
+
     // Gradient danger zone: filled rectangle from dangerY to bottom
     const zoneHeight = h - dangerY
     const numBands = 10
@@ -385,21 +463,20 @@ export default class GameScene extends Phaser.Scene {
       const bandY = dangerY + t * zoneHeight
       const bandH = zoneHeight / numBands + 1
       const alpha = t * 0.08 // transparent at top → 0.08 at bottom
-      this.dangerLineGraphics.fillStyle(ACCENT_MAGENTA, alpha)
+      this.dangerLineGraphics.fillStyle(dangerColor, alpha)
       this.dangerLineGraphics.fillRect(0, bandY, w, bandH)
     }
 
     // Main danger line at dangerY
-    this.dangerLineGraphics.lineStyle(1.5, ACCENT_MAGENTA, 0.5)
+    this.dangerLineGraphics.lineStyle(1.5, dangerColor, 0.5)
     this.dangerLineGraphics.lineBetween(40, dangerY, w - 40, dangerY)
 
     // Second thinner line 2px below
-    this.dangerLineGraphics.lineStyle(0.8, ACCENT_MAGENTA, 0.2)
+    this.dangerLineGraphics.lineStyle(0.8, dangerColor, 0.2)
     this.dangerLineGraphics.lineBetween(40, dangerY + 2, w - 40, dangerY + 2)
 
     // Texto "ZONA CRÍTICA"
-    const isLight = this.currentTheme === 'light'
-    const textColor = isLight ? 'rgba(44, 42, 41, 0.4)' : 'rgba(244, 240, 234, 0.4)'
+    const textColor = isLight ? 'rgba(120, 100, 90, 0.5)' : 'rgba(244, 240, 234, 0.4)'
     if (!this.dangerText) {
       this.dangerText = this.add.text(w / 2, dangerY - 14, 'ZONA CRÍTICA', {
         fontFamily: "'Sora', sans-serif",
@@ -425,58 +502,99 @@ export default class GameScene extends Phaser.Scene {
 
   /** UI superior: score, HP y combo — Digital HUD Style */
   private createUI(w: number): void {
-    const isLight = this.currentTheme === 'light'
-    const textColor = isLight ? '#1a1a2e' : '#ffffff'
-    const labelColor = isLight ? 'rgba(74, 85, 104, 0.6)' : 'rgba(0, 229, 255, 0.5)'
+    const textColor = '#f5f0ff' // --white
+    const labelColor = '#6b5f8a' // --muted
 
     const panelStyle = {
       fontFamily: "'JetBrains Mono', monospace",
       fontSize: '24px',
       color: textColor,
-      fontStyle: '600',
+      fontStyle: '700',
     }
 
     const labelStyle = {
-      fontFamily: "'Sora', sans-serif",
+      fontFamily: "'JetBrains Mono', monospace",
       fontSize: '9px',
       color: labelColor,
       letterSpacing: 2,
-      fontStyle: '600',
+      fontStyle: '700',
     }
 
     // — Score —
     this.scoreLabel = this.add.text(24, 16, 'PUNTOS', labelStyle)
     this.scoreText = this.add.text(24, 30, '000000', {
       ...panelStyle,
-      fontSize: '24px',
+      color: '#a855f7', // --purple
     })
 
     // — HP —
     this.hpLabel = this.add.text(w / 2, 16, 'ESCUDO', labelStyle).setOrigin(0.5, 0)
-    this.hpText = this.add.text(w / 2, 30, this.buildHpString(), {
+    this.hpText = this.add.text(w / 2, 30, '', {
       ...panelStyle,
-      fontSize: '18px',
-      color: '#ff006e', // Magenta
+      fontSize: '1px',
+      color: '#22c55e',
     }).setOrigin(0.5, 0)
+    this.hpText.setVisible(false) // Ocultar texto, usaremos gráficos
 
     // — Combo —
     this.comboLabel = this.add.text(w - 24, 16, 'COMBO', labelStyle).setOrigin(1, 0)
     this.comboText = this.add.text(w - 24, 30, 'x1', {
       ...panelStyle,
       fontSize: '22px',
-      color: '#ffc300', // Amber
+      color: '#facc15', // --yellow
     }).setOrigin(1, 0)
+
+    // Dibujar los escudos
+    this.drawHp()
   }
 
-  /** Construye el string de esferas para el HP */
+  /** Dibuja los 5 escudos del HP como círculos rellenos (--green o --faint) */
+  private drawHp(): void {
+    if (!this.hpGraphics) return
+    this.hpGraphics.clear()
+    const isLight = this.currentTheme === 'light'
+    const activeColor = isLight ? 0x16a34a : 0x22c55e  // --green
+    const inactiveColor = isLight ? 0xe6ded3 : 0x2a2040 // --faint
+
+    const startX = this.scale.width / 2 - (MAX_HP * 16) / 2 + 8
+    const y = 42
+
+    for (let i = 0; i < MAX_HP; i++) {
+      const color = i < this.hp ? activeColor : inactiveColor
+      this.hpGraphics.fillStyle(color, 1)
+      this.hpGraphics.fillCircle(startX + i * 16, y, 5.5)
+      
+      // Borde sutil
+      this.hpGraphics.lineStyle(1, i < this.hp ? 0x16a34a : 0x1e1828, 0.8)
+      this.hpGraphics.strokeCircle(startX + i * 16, y, 5.5)
+    }
+  }
+
+  /** Mantiene compatibilidad de cadena para HP */
   private buildHpString(): string {
-    return '●'.repeat(this.hp) + '○'.repeat(MAX_HP - this.hp)
+    return ''
   }
 
   /** Crea una nota musical o un acorde en un carril vertical libre de superposiciones */
   private spawnNote(): void {
-    // Decidir si se genera una nota simple (70%) o un acorde (30%)
-    const spawnChord = Phaser.Math.Between(1, 100) <= 30
+    // Incrementar métrica
+    this.notesSpawned++
+
+    // Decidir si se genera nota suelta o acorde según dificultad / modo
+    let spawnChord = false
+    const diff = this.game.registry.get('difficulty') || 'beginner'
+
+    if (this.gameMode === 'practice') {
+      spawnChord = Phaser.Math.Between(1, 100) <= 40 // 40% en práctica
+    } else {
+      if (diff === 'beginner') {
+        spawnChord = false
+      } else if (diff === 'intermediate') {
+        spawnChord = Phaser.Math.Between(1, 100) <= 30
+      } else {
+        spawnChord = Phaser.Math.Between(1, 100) <= 40
+      }
+    }
 
     // Velocidad uniforme escalada por el BPM
     const speedMultiplier = this.bpm / 60
@@ -488,8 +606,8 @@ export default class GameScene extends Phaser.Scene {
     }
 
     // ── Sistema de Prevención de Superposición por Carriles ──
-    const availableLanes = LANES.filter(laneX => {
-      // Un carril está libre si ninguna nota activa está en ese carril y arriba (y < 140)
+    const activeLanes = this.lanes.length > 0 ? this.lanes : LANES
+    const availableLanes = activeLanes.filter(laneX => {
       const isOccupied = this.notesGroup.getChildren().some(obj => {
         const note = obj as Phaser.GameObjects.Container
         return Math.abs(note.x - laneX) < 10 && note.y < 140
@@ -501,11 +619,10 @@ export default class GameScene extends Phaser.Scene {
     if (availableLanes.length > 0) {
       x = Phaser.Math.RND.pick(availableLanes)
     } else {
-      // Fallback: Elegir el carril cuya nota más alta esté más abajo en la pantalla (mayor coordenada Y)
-      let bestLane = LANES[0]
+      let bestLane = activeLanes[0]
       let maxTopY = -Infinity
 
-      LANES.forEach(laneX => {
+      activeLanes.forEach(laneX => {
         let topY = Infinity
         this.notesGroup.getChildren().forEach(obj => {
           const note = obj as Phaser.GameObjects.Container
@@ -526,24 +643,37 @@ export default class GameScene extends Phaser.Scene {
     const circle = this.add.graphics()
 
     const isLight = this.currentTheme === 'light'
-    const fillAlpha = isLight ? 0.9 : 0.95
-    const labelColor = isLight ? '#2c2a29' : '#ffffff'
-    const detailColor = isLight ? 'rgba(44, 42, 41, 0.7)' : 'rgba(255, 255, 255, 0.7)'
-    const symbolColor = isLight ? 'rgba(44, 42, 41, 0.5)' : 'rgba(255, 255, 255, 0.5)'
+    const fillAlpha = isLight ? 0.55 : 0.25
+    const labelColor = isLight ? '#1a1a2e' : '#f5f0ff' // --white
+    const detailColor = isLight ? 'rgba(26, 26, 46, 0.8)' : 'rgba(245, 240, 255, 0.7)'
+    const symbolColor = isLight ? 'rgba(26, 26, 46, 0.5)' : 'rgba(245, 240, 255, 0.5)'
 
     if (spawnChord) {
-      // ──────────────────────────────────────────
-      // SPAWN DE ACORDE (Do, Rem, Mim, Fa, Sol, Lam)
-      // ──────────────────────────────────────────
-      const chord = CHORD_TYPES[Phaser.Math.Between(0, CHORD_TYPES.length - 1)]
+      // Filtrar acordes por dificultad
+      let chordPool = CHORD_TYPES
+      if (diff === 'intermediate' && this.gameMode === 'arcade') {
+        // Solo mayores y menores
+        chordPool = CHORD_TYPES.filter(c => c.name.endsWith('m') ? c.name.match(/^[A-Za-z#]+m$/) : c.name.match(/^[A-Za-z#]+$/))
+      } else if (diff === 'advanced' && this.gameMode === 'arcade') {
+        // Excluir dim y aug
+        chordPool = CHORD_TYPES.filter(c => !c.name.includes('dim') && !c.name.includes('aug'))
+      }
 
-      // Círculo principal relleno sólido
+      if (chordPool.length === 0) chordPool = CHORD_TYPES
+      const chord = chordPool[Phaser.Math.Between(0, chordPool.length - 1)]
+
+      // Outer glow ring
+      circle.lineStyle(1, chord.color, 0.12)
+      circle.strokeCircle(0, 0, CHORD_RADIUS + 3)
+      // Fill
       circle.fillStyle(chord.color, fillAlpha)
       circle.fillCircle(0, 0, CHORD_RADIUS)
-
-      // Borde limpio
-      circle.lineStyle(1.5, isLight ? 0x2c2a29 : 0xf4f0ea, 0.8)
+      // Outer border
+      circle.lineStyle(2, chord.color, 0.9)
       circle.strokeCircle(0, 0, CHORD_RADIUS)
+      // Inner ring
+      circle.lineStyle(1.2, chord.color, 0.3)
+      circle.strokeCircle(0, 0, CHORD_RADIUS - 8)
 
       // Texto del nombre del acorde (ej: "Lam" -> "Am")
       const chordNameText = this.translateChordName(chord.name, this.currentNotation)
@@ -568,7 +698,7 @@ export default class GameScene extends Phaser.Scene {
       // Agrupar en contenedor
       container = this.add.container(x, y, [circle, label, notesLabel])
       container.setSize(CHORD_RADIUS * 2, CHORD_RADIUS * 2)
-      container.setInteractive()
+      container.setInteractive(new Phaser.Geom.Circle(0, 0, CHORD_RADIUS), Phaser.Geom.Circle.Contains)
 
       // Guardar datos
       container.setData('speed', speed)
@@ -588,13 +718,18 @@ export default class GameScene extends Phaser.Scene {
       const fullName = `${type.name}${octave}`
       const displayName = this.translateNoteName(fullName, this.currentNotation)
 
-      // Círculo principal relleno sólido
+      // Outer glow ring
+      circle.lineStyle(1, type.color, 0.12)
+      circle.strokeCircle(0, 0, NOTE_RADIUS + 3)
+      // Fill
       circle.fillStyle(type.color, fillAlpha)
       circle.fillCircle(0, 0, NOTE_RADIUS)
-
-      // Borde limpio
-      circle.lineStyle(1.5, isLight ? 0x2c2a29 : 0xf4f0ea, 0.8)
+      // Outer border
+      circle.lineStyle(2, type.color, 0.9)
       circle.strokeCircle(0, 0, NOTE_RADIUS)
+      // Inner ring
+      circle.lineStyle(1, type.color, 0.3)
+      circle.strokeCircle(0, 0, NOTE_RADIUS - 6)
 
       // Texto de la nota
       const label = this.add.text(0, -3, displayName, {
@@ -615,7 +750,7 @@ export default class GameScene extends Phaser.Scene {
       // Agrupar en contenedor
       container = this.add.container(x, y, [circle, label, symbol])
       container.setSize(NOTE_RADIUS * 2, NOTE_RADIUS * 2)
-      container.setInteractive()
+      container.setInteractive(new Phaser.Geom.Circle(0, 0, NOTE_RADIUS), Phaser.Geom.Circle.Contains)
 
       // Guardar datos
       container.setData('speed', speed)
@@ -659,7 +794,7 @@ export default class GameScene extends Phaser.Scene {
     // Este handler sirve de respaldo y para efectos de cursor
     const ripple = this.add.graphics()
     const isLight = this.currentTheme === 'light'
-    const rippleColor = isLight ? 0x1a1a2e : ACCENT_TEAL
+    const rippleColor = isLight ? 0x1a1a2e : COLOR_GREEN
     const rippleAlpha = isLight ? 0.2 : 0.3
     ripple.lineStyle(1, rippleColor, rippleAlpha)
     ripple.strokeCircle(pointer.x, pointer.y, 8)
@@ -705,6 +840,9 @@ export default class GameScene extends Phaser.Scene {
 
     // — Flash de texto "+POINTS" —
     this.combo++
+    this.notesHit++
+    this.maxComboReached = Math.max(this.maxComboReached, this.combo)
+
     const multiplier = Math.min(Math.floor(this.combo / 3) + 1, 5)
     const earned = points * multiplier
 
@@ -713,10 +851,10 @@ export default class GameScene extends Phaser.Scene {
 
     // Texto flotante de puntos
     const floatText = this.add.text(note.x, note.y, `+${earned}`, {
-      fontFamily: "'Sora', sans-serif",
+      fontFamily: "'JetBrains Mono', monospace",
       fontSize: multiplier > 1 ? '18px' : '13px',
-      fontStyle: '600',
-      color: multiplier > 1 ? '#ffc300' : glow,
+      fontStyle: '700',
+      color: multiplier > 1 ? '#facc15' : '#a855f7',
     }).setOrigin(0.5)
 
     this.tweens.add({
@@ -742,15 +880,20 @@ export default class GameScene extends Phaser.Scene {
 
   /** Nota que llegó al fondo sin ser tocada */
   private noteEscaped(note: Phaser.GameObjects.Container): void {
+    if (this.gameMode === 'practice') {
+      this.notesGroup.remove(note, true, true)
+      return
+    }
+
     // Activar vibración en la cuerda correspondiente
     const laneIndex = this.lanes.findIndex(laneX => Math.abs(laneX - note.x) < 15)
     if (laneIndex !== -1) {
       this.laneVibrations[laneIndex] = 12
     }
 
-    // Efecto de "miss" — flash magenta
+    // Efecto de "miss" — flash morado
     const flash = this.add.graphics()
-    flash.fillStyle(ACCENT_MAGENTA, 0.12)
+    flash.fillStyle(COLOR_PURPLE, 0.12)
     flash.fillRect(0, 0, this.scale.width, this.scale.height)
     this.tweens.add({
       targets: flash,
@@ -768,14 +911,14 @@ export default class GameScene extends Phaser.Scene {
 
     // Restar HP
     this.hp--
-    this.hpText.setText(this.buildHpString())
+    this.drawHp()
 
     // Nota de miss flotante
     const missText = this.add.text(note.x, this.scale.height - 70, 'MISS', {
-      fontFamily: "'Sora', sans-serif",
+      fontFamily: "'JetBrains Mono', monospace",
       fontSize: '15px',
-      fontStyle: '600',
-      color: '#ff006e',
+      fontStyle: '700',
+      color: '#a855f7',
     }).setOrigin(0.5)
 
     this.tweens.add({
@@ -895,6 +1038,7 @@ export default class GameScene extends Phaser.Scene {
 
   /** Activa la pantalla de Game Over */
   private triggerGameOver(): void {
+    this.isPlaying = false
     this.isGameOver = true
 
     // Detener las notas en pantalla (tween de fade out)
@@ -909,33 +1053,25 @@ export default class GameScene extends Phaser.Scene {
       })
     })
 
-    // Mostrar Game Over después de un breve delay
-    this.time.delayedCall(500, () => {
-      this.gameOverContainer.setVisible(true)
-      this.tweens.add({
-        targets: this.gameOverContainer,
-        alpha: 1,
-        duration: 600,
-        ease: 'Quad.easeIn'
-      })
-
-      // Actualizar el score final en el overlay
-      const scoreDisplay = this.gameOverContainer.getAt(3) as Phaser.GameObjects.Text
-      if (scoreDisplay) {
-        scoreDisplay.setText(`PUNTOS: ${this.score.toString().padStart(6, '0')}`)
-      }
+    // Enviar estadísticas al hilo principal para mostrar el Game Over HTML
+    const accuracy = Math.round((this.notesHit / Math.max(1, this.notesSpawned)) * 100)
+    this.game.events.emit('game-over', {
+      score: this.score,
+      notesHit: this.notesHit,
+      accuracy: accuracy,
+      bestCombo: this.maxComboReached
     })
   }
 
   /** Crea el overlay de Game Over — Premium overlay (adaptable al tema claro/oscuro) */
   private createGameOverScreen(w: number, h: number): void {
     const isLight = this.currentTheme === 'light'
-    const overlayColor = isLight ? LIGHT_BG : DARK_BG
+    const overlayColor = isLight ? COLOR_WHITE : COLOR_BG
     const textColor = isLight ? '#1a1a2e' : '#ffffff'
     const labelColor = isLight ? 'rgba(74, 85, 104, 0.6)' : 'rgba(0, 229, 255, 0.5)'
-    const buttonBgColor = isLight ? LIGHT_GRID : DARK_GRID
+    const buttonBgColor = isLight ? COLOR_MUTED : COLOR_BG2
     const buttonHoverBgColor = isLight ? 0xd5cfc4 : 0x2d2b3e
-    const buttonBorderColor = isLight ? LIGHT_STAVE : ACCENT_TEAL
+    const buttonBorderColor = isLight ? COLOR_MUTED : COLOR_GREEN
 
     const wasVisible = this.gameOverContainer ? this.gameOverContainer.visible : false
     const oldAlpha = this.gameOverContainer ? this.gameOverContainer.alpha : 0
@@ -1030,13 +1166,18 @@ export default class GameScene extends Phaser.Scene {
   /** Actualiza dinámicamente los colores de los textos de la UI según el tema */
   private updateUIColors(): void {
     const isLight = this.currentTheme === 'light'
-    const textColor = isLight ? '#1a1a2e' : '#ffffff'
-    const labelColor = isLight ? 'rgba(74, 85, 104, 0.6)' : 'rgba(0, 229, 255, 0.5)'
+    const labelColor = isLight ? '#6b5f8a' : 'rgba(0, 229, 255, 0.5)'
+    const scoreColor = isLight ? '#7c3aed' : '#a855f7'
+    const comboColor = isLight ? '#ca8a04' : '#facc15'
 
     if (this.scoreLabel) this.scoreLabel.setColor(labelColor)
-    if (this.scoreText) this.scoreText.setColor(textColor)
+    if (this.scoreText) this.scoreText.setColor(scoreColor)
     if (this.hpLabel) this.hpLabel.setColor(labelColor)
     if (this.comboLabel) this.comboLabel.setColor(labelColor)
+    if (this.comboText) this.comboText.setColor(comboColor)
+
+    // Redibujar HP
+    this.drawHp()
   }
 
   /** Maneja el cambio de tema en vivo */
@@ -1299,10 +1440,27 @@ export default class GameScene extends Phaser.Scene {
     console.log(`🔊 Metrónomo ${active ? 'activado' : 'desactivado'}`)
   }
 
+  /** Obtiene o inicializa de forma perezosa el AudioContext para el metrónomo */
+  private getMetronomeContext(): AudioContext | null {
+    if (!this.metronomeAudioContext) {
+      try {
+        const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext
+        this.metronomeAudioContext = new AudioContextClass()
+      } catch (e) {
+        console.error('Error al crear el AudioContext del metrónomo:', e)
+      }
+    }
+    return this.metronomeAudioContext
+  }
+
   /** Reproduce un sonido de click sintetizado proceduralmente con Web Audio */
   private playMetronomeClick(): void {
-    const ctx = (this.sound as any).context as AudioContext
+    const ctx = this.getMetronomeContext()
     if (!ctx) return
+
+    if (ctx.state === 'suspended') {
+      ctx.resume().catch(() => {})
+    }
 
     const osc = ctx.createOscillator()
     const gain = ctx.createGain()
@@ -1311,12 +1469,15 @@ export default class GameScene extends Phaser.Scene {
     gain.connect(ctx.destination)
 
     const now = ctx.currentTime
-    osc.frequency.setValueAtTime(800, now) // Tono corto agudo y limpio
-    gain.gain.setValueAtTime(0.08, now) // volumen controlado
-    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.05)
+    osc.frequency.setValueAtTime(1000, now) // Tono corto agudo y limpio
+    gain.gain.setValueAtTime(0.18, now) // volumen controlado
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.08)
 
     osc.start(now)
-    osc.stop(now + 0.05)
+    osc.stop(now + 0.08)
+
+    // Emitir latido para la UI
+    this.game.events.emit('metronome-beat')
   }
 
   /** Calcula la posición X de los carriles basándose en el ancho actual del canvas */
@@ -1364,5 +1525,63 @@ export default class GameScene extends Phaser.Scene {
         overlay.fillRect(-width / 2, -height / 2, width, height)
       }
     }
+  }
+
+  /** Maneja el evento de inicio de juego enviado desde el menú principal */
+  private handleGameStart(config: { mode: 'arcade' | 'practice', difficulty: string }): void {
+    this.isPlaying = true
+    this.gameMode = config.mode
+    
+    // Configurar velocidad y spawn según dificultad
+    if (config.mode === 'practice') {
+      this.bpm = 50
+    } else {
+      if (config.difficulty === 'beginner') {
+        this.bpm = 60
+      } else if (config.difficulty === 'intermediate') {
+        this.bpm = 100
+      } else if (config.difficulty === 'advanced') {
+        this.bpm = 150
+      } else if (config.difficulty === 'master') {
+        this.bpm = 200
+      }
+    }
+    
+    this.spawnIntervalMs = 60000 / this.bpm
+
+    // Resetear contadores
+    this.score = 0
+    this.hp = MAX_HP
+    this.combo = 0
+    this.notesSpawned = 0
+    this.notesHit = 0
+    this.maxComboReached = 0
+    this.isGameOver = false
+
+    // Limpiar notas viejas
+    this.notesGroup.clear(true, true)
+
+    // Esconder contenedor de Game Over interno (por si existiera)
+    if (this.gameOverContainer) {
+      this.gameOverContainer.setVisible(false)
+    }
+
+    // Actualizar HUD
+    this.updateScoreDisplay()
+    this.drawHp()
+    this.comboText.setText('x1')
+    
+    // Reanudar la escena si estaba pausada
+    this.scene.resume()
+    
+    console.log(`🎮 Partida Iniciada: modo=${this.gameMode}, bpm=${this.bpm}`)
+  }
+
+  /** Maneja el evento de parada del juego */
+  private handleGameStop(): void {
+    this.isPlaying = false
+    this.notesGroup.clear(true, true)
+    this.scene.pause()
+    console.log('🎮 Partida Finalizada/Detenida')
   }
 }
