@@ -146,6 +146,17 @@ function startGameSession() {
   const display = document.getElementById('bpm-val-display')
   if (slider) slider.value = initialBpm.toString()
   if (display) display.textContent = initialBpm.toString()
+
+  // Sincronizar badge de práctica preseleccionada
+  const preselected = localStorage.getItem('practice_preselected_chord')
+  const targetBadge = document.getElementById('practice-target-badge')
+  const targetChordText = document.getElementById('practice-target-chord')
+  if (lastSelectedMode === 'practice' && preselected) {
+    if (targetBadge) targetBadge.style.display = 'inline-flex'
+    if (targetChordText) targetChordText.textContent = translateChord(preselected, currentNotation)
+  } else {
+    if (targetBadge) targetBadge.style.display = 'none'
+  }
 }
 
 // Renderizar estadísticas de Game Over
@@ -192,6 +203,11 @@ function handleRouting() {
     game.events.emit('game-stop')
   }
 
+  if (hash !== '#play' && hash !== '#fast-circle-play') {
+    // Clear practice preselected if navigating away
+    localStorage.removeItem('practice_preselected_chord')
+  }
+
   let screenId = 'start-screen'
   if (hash === '#start') {
     screenId = 'start-screen'
@@ -201,6 +217,12 @@ function handleRouting() {
     screenId = 'difficulty-screen'
   } else if (hash === '#chord-circle') {
     screenId = 'chord-circle-screen'
+  } else if (hash === '#fast-circle-config') {
+    screenId = 'fast-circle-config-screen'
+  } else if (hash === '#fast-circle-play') {
+    screenId = 'fast-circle-play-screen'
+  } else if (hash === '#fast-circle-results') {
+    screenId = 'fast-circle-results-screen'
   } else if (hash === '#play') {
     screenId = 'game-view'
     if (isPhaserReady) {
@@ -215,6 +237,12 @@ function handleRouting() {
   // Inicializar sub-pantallas si es necesario
   if (hash === '#chord-circle') {
     initChordCircleMode()
+  } else if (hash === '#fast-circle-config') {
+    initFastCircleConfigScreen()
+  } else if (hash === '#fast-circle-play') {
+    startFastCircleRound()
+  } else if (hash === '#fast-circle-results') {
+    renderFastCircleResults()
   } else if (hash === '#gameover') {
     renderGameOverStats()
   }
@@ -263,6 +291,13 @@ const cardCircle = document.getElementById('card-circle')
 if (cardCircle) {
   cardCircle.addEventListener('click', () => {
     window.location.hash = '#chord-circle'
+  })
+}
+
+const cardFastCircle = document.getElementById('card-fast-circle')
+if (cardFastCircle) {
+  cardFastCircle.addEventListener('click', () => {
+    window.location.hash = '#fast-circle-config'
   })
 }
 
@@ -527,6 +562,7 @@ window.addEventListener('click', async () => {
       const midiNote = Math.round(12 * Math.log2(result.frequency / 440) + 69)
       const idealHz = 440 * Math.pow(2, (midiNote - 69) / 12)
       const centsDeviation = Math.round(1200 * Math.log2(result.frequency / idealHz))
+      fcLastPitchCents = centsDeviation
       
       if (tunerBarCents) {
         const sign = centsDeviation >= 0 ? '+' : ''
@@ -562,6 +598,11 @@ window.addEventListener('click', async () => {
       // Controlar el modo Círculo de Acordes si está activo y guiado
       if (guideActive && chordName) {
         handleChordCircleInput(chordName)
+      }
+
+      // Controlar el modo Círculo Veloz si la ronda está activa
+      if (fcRoundActive) {
+        handleFastCircleInput(chordName)
       }
     })
   }
@@ -882,6 +923,744 @@ if (goMenuBtn) {
   goMenuBtn.addEventListener('click', () => {
     window.location.hash = '#start'
   })
+}
+
+// ──────────────────────────────────────────
+// Estado del Modo Círculo Veloz
+// ──────────────────────────────────────────
+let fcSelectedKey = 'Do';
+let fcSelectedDiff = 'normal'; // 'normal', 'rapido', 'extremo'
+let fcCurrentRoundChords: any[] = [];
+let fcCurrentTargetIndex = 0;
+let fcScore = 0;
+let fcStreak = 0;
+let fcTimer = 0;
+let fcTimerInterval: any = null;
+let fcChordStartTime = 0;
+let fcRoundActive = false;
+let fcRoundResults: { name: string, time: number, points: number, speed: 'fast' | 'medium' | 'slow' }[] = [];
+let fcConfirmTimeout: any = null;
+let fcLastPitchCents = 0;
+
+const VELOCITY_CIRCLE_SEQUENCES: Record<string, { name: string, type: string, roman: string, function: string, notes: string[] }[]> = {
+  Do: [
+    { name: 'Do maj', type: 'mayor', roman: 'I', function: 'tónica', notes: ['Do', 'Mi', 'Sol'] },
+    { name: 'Re m', type: 'menor', roman: 'II', function: 'supertónica', notes: ['Re', 'Fa', 'La'] },
+    { name: 'Mi m', type: 'menor', roman: 'III', function: 'mediante', notes: ['Mi', 'Sol', 'Si'] },
+    { name: 'Fa maj', type: 'mayor', roman: 'IV', function: 'subdominante', notes: ['Fa', 'La', 'Do'] },
+    { name: 'Sol maj', type: 'mayor', roman: 'V', function: 'dominante', notes: ['Sol', 'Si', 'Re'] },
+    { name: 'La m', type: 'menor', roman: 'VI', function: 'submediante', notes: ['La', 'Do', 'Mi'] },
+    { name: 'Si dim', type: 'disminuido', roman: 'VII°', function: 'sensible', notes: ['Si', 'Re', 'Fa'] }
+  ],
+  Re: [
+    { name: 'Re maj', type: 'mayor', roman: 'I', function: 'tónica', notes: ['Re', 'Fa#', 'La'] },
+    { name: 'Mi m', type: 'menor', roman: 'II', function: 'supertónica', notes: ['Mi', 'Sol', 'Si'] },
+    { name: 'Fa# m', type: 'menor', roman: 'III', function: 'mediante', notes: ['Fa#', 'La', 'Do#'] },
+    { name: 'Sol maj', type: 'mayor', roman: 'IV', function: 'subdominante', notes: ['Sol', 'Si', 'Re'] },
+    { name: 'La maj', type: 'mayor', roman: 'V', function: 'dominante', notes: ['La', 'Do#', 'Mi'] },
+    { name: 'Si m', type: 'menor', roman: 'VI', function: 'submediante', notes: ['Si', 'Re', 'Fa#'] },
+    { name: 'Do# dim', type: 'disminuido', roman: 'VII°', function: 'sensible', notes: ['Do#', 'Mi', 'Sol'] }
+  ],
+  Mi: [
+    { name: 'Mi maj', type: 'mayor', roman: 'I', function: 'tónica', notes: ['Mi', 'Sol#', 'Si'] },
+    { name: 'Fa# m', type: 'menor', roman: 'II', function: 'supertónica', notes: ['Fa#', 'La', 'Do#'] },
+    { name: 'Sol# m', type: 'menor', roman: 'III', function: 'mediante', notes: ['Sol#', 'Si', 'Re#'] },
+    { name: 'La maj', type: 'mayor', roman: 'IV', function: 'subdominante', notes: ['La', 'Do#', 'Mi'] },
+    { name: 'Si maj', type: 'mayor', roman: 'V', function: 'dominante', notes: ['Si', 'Re#', 'Fa#'] },
+    { name: 'Do# m', type: 'menor', roman: 'VI', function: 'submediante', notes: ['Do#', 'Mi', 'Sol#'] },
+    { name: 'Re# dim', type: 'disminuido', roman: 'VII°', function: 'sensible', notes: ['Re#', 'Fa#', 'La'] }
+  ],
+  Fa: [
+    { name: 'Fa maj', type: 'mayor', roman: 'I', function: 'tónica', notes: ['Fa', 'La', 'Do'] },
+    { name: 'Sol m', type: 'menor', roman: 'II', function: 'supertónica', notes: ['Sol', 'Sib', 'Re'] },
+    { name: 'La m', type: 'menor', roman: 'III', function: 'mediante', notes: ['La', 'Do', 'Mi'] },
+    { name: 'Sib maj', type: 'mayor', roman: 'IV', function: 'subdominante', notes: ['Sib', 'Re', 'Fa'] },
+    { name: 'Do maj', type: 'mayor', roman: 'V', function: 'dominante', notes: ['Do', 'Mi', 'Sol'] },
+    { name: 'Re m', type: 'menor', roman: 'VI', function: 'submediante', notes: ['Re', 'Fa', 'La'] },
+    { name: 'Mi dim', type: 'disminuido', roman: 'VII°', function: 'sensible', notes: ['Mi', 'Sol', 'Sib'] }
+  ],
+  Sol: [
+    { name: 'Sol maj', type: 'mayor', roman: 'I', function: 'tónica', notes: ['Sol', 'Si', 'Re'] },
+    { name: 'La m', type: 'menor', roman: 'II', function: 'supertónica', notes: ['La', 'Do', 'Mi'] },
+    { name: 'Si m', type: 'menor', roman: 'III', function: 'mediante', notes: ['Si', 'Re', 'Fa#'] },
+    { name: 'Do maj', type: 'mayor', roman: 'IV', function: 'subdominante', notes: ['Do', 'Mi', 'Sol'] },
+    { name: 'Re maj', type: 'mayor', roman: 'V', function: 'dominante', notes: ['Re', 'Fa#', 'La'] },
+    { name: 'Mi m', type: 'menor', roman: 'VI', function: 'submediante', notes: ['Mi', 'Sol', 'Si'] },
+    { name: 'Fa# dim', type: 'disminuido', roman: 'VII°', function: 'sensible', notes: ['Fa#', 'La', 'Do'] }
+  ],
+  La: [
+    { name: 'La maj', type: 'mayor', roman: 'I', function: 'tónica', notes: ['La', 'Do#', 'Mi'] },
+    { name: 'Si m', type: 'menor', roman: 'II', function: 'supertónica', notes: ['Si', 'Re', 'Fa#'] },
+    { name: 'Do# m', type: 'menor', roman: 'III', function: 'mediante', notes: ['Do#', 'Mi', 'Sol#'] },
+    { name: 'Re maj', type: 'mayor', roman: 'IV', function: 'subdominante', notes: ['Re', 'Fa#', 'La'] },
+    { name: 'Mi maj', type: 'mayor', roman: 'V', function: 'dominante', notes: ['Mi', 'Sol#', 'Si'] },
+    { name: 'Fa# m', type: 'menor', roman: 'VI', function: 'submediante', notes: ['Fa#', 'La', 'Do#'] },
+    { name: 'Sol# dim', type: 'disminuido', roman: 'VII°', function: 'sensible', notes: ['Sol#', 'Si', 'Re'] }
+  ],
+  Si: [
+    { name: 'Si maj', type: 'mayor', roman: 'I', function: 'tónica', notes: ['Si', 'Re#', 'Fa#'] },
+    { name: 'Do# m', type: 'menor', roman: 'II', function: 'supertónica', notes: ['Do#', 'Mi', 'Sol#'] },
+    { name: 'Re# m', type: 'menor', roman: 'III', function: 'mediante', notes: ['Re#', 'Fa#', 'La#'] },
+    { name: 'Mi maj', type: 'mayor', roman: 'IV', function: 'subdominante', notes: ['Mi', 'Sol#', 'Si'] },
+    { name: 'Fa# maj', type: 'mayor', roman: 'V', function: 'dominante', notes: ['Fa#', 'La#', 'Do#'] },
+    { name: 'Sol# m', type: 'menor', roman: 'VI', function: 'submediante', notes: ['Sol#', 'Si', 'Re#'] },
+    { name: 'La# dim', type: 'disminuido', roman: 'VII°', function: 'sensible', notes: ['La#', 'Do#', 'Mi'] }
+  ]
+};
+
+const LATIN_TO_EN_NOTES = {
+  'Do': 'C', 'Re': 'D', 'Mi': 'E', 'Fa': 'F', 'Sol': 'G', 'La': 'A', 'Si': 'B'
+};
+const EN_TO_LATIN_NOTES = {
+  'C': 'Do', 'D': 'Re', 'E': 'Mi', 'F': 'Fa', 'G': 'Sol', 'A': 'La', 'B': 'Si'
+};
+
+function translateNote(noteName: string, targetNotation: 'latin' | 'american'): string {
+  if (!noteName) return '';
+  const match = noteName.match(/^([A-G]#?|Bb|Db|Eb|Gb|Ab|Do#?|Re#?|Mi|Fa#?|Sol#?|La#?|Si)(.*)$/);
+  if (!match) return noteName;
+  const root = match[1];
+  const rest = match[2];
+
+  if (targetNotation === 'american') {
+    let translated = (LATIN_TO_EN_NOTES as any)[root] || root;
+    if (root === 'Sib') translated = 'Bb';
+    if (root === 'Reb') translated = 'Db';
+    if (root === 'Mib') translated = 'Eb';
+    if (root === 'Solb') translated = 'Gb';
+    if (root === 'Lab') translated = 'Ab';
+    return translated + rest;
+  } else {
+    let translated = (EN_TO_LATIN_NOTES as any)[root] || root;
+    if (root === 'Bb') translated = 'Sib';
+    if (root === 'Db') translated = 'Reb';
+    if (root === 'Eb') translated = 'Mib';
+    if (root === 'Gb') translated = 'Solb';
+    if (root === 'Ab') translated = 'Lab';
+    return translated + rest;
+  }
+}
+
+function translateChord(chordName: string, targetNotation: 'latin' | 'american'): string {
+  if (!chordName) return '';
+  const match = chordName.match(/^([A-G]#?|Bb|Db|Eb|Gb|Ab|Do#?|Re#?|Mi|Fa#?|Sol#?|La#?|Si)(.*)$/);
+  if (!match) return chordName;
+  const root = match[1];
+  const suffix = match[2] || '';
+
+  const translatedRoot = translateNote(root, targetNotation);
+  const s = suffix.trim();
+  
+  if (targetNotation === 'american') {
+    if (s === 'maj') return translatedRoot + ' maj';
+    if (s === 'm') return translatedRoot + 'm';
+    if (s === 'dim') return translatedRoot + ' dim';
+  } else {
+    if (s === 'maj') return translatedRoot + ' maj';
+    if (s === 'm') return translatedRoot + ' m';
+    if (s === 'dim') return translatedRoot + ' dim';
+  }
+  return translatedRoot + suffix;
+}
+
+function normalizeChord(chord: string): string {
+  if (!chord) return '';
+  let c = chord.toLowerCase().replace(/\s+/g, '').replace(/-/g, '');
+  
+  c = c.replace('reb', 'do#');
+  c = c.replace('mib', 're#');
+  c = c.replace('solb', 'fa#');
+  c = c.replace('lab', 'sol#');
+  c = c.replace('sib', 'la#');
+  
+  c = c.replace('db', 'c#');
+  c = c.replace('eb', 'd#');
+  c = c.replace('gb', 'f#');
+  c = c.replace('ab', 'g#');
+  c = c.replace('bb', 'a#');
+  
+  if (c.includes('dim') || c.includes('disminuido') || c.includes('°')) {
+    let root = c.replace('diminished', '').replace('disminuido', '').replace('dim', '').replace('°', '');
+    return root + 'dim';
+  }
+  
+  if (c.endsWith('menor') || c.endsWith('minor') || c.endsWith('min')) {
+    let root = c.replace('menor', '').replace('minor', '').replace('min', '');
+    return root + 'm';
+  }
+  
+  c = c.replace('major', '').replace('mayor', '').replace('maj', '');
+  
+  if (c === 'rem' || c === 'mim' || c === 'lam' || c === 'sim' || c === 'dom' || c === 'fam' || c === 'solm') {
+    return c;
+  }
+  
+  if (c.startsWith('do#') && c.endsWith('m')) return 'do#m';
+  if (c.startsWith('re#') && c.endsWith('m')) return 're#m';
+  if (c.startsWith('fa#') && c.endsWith('m')) return 'fa#m';
+  if (c.startsWith('sol#') && c.endsWith('m')) return 'sol#m';
+  if (c.startsWith('la#') && c.endsWith('m')) return 'la#m';
+  
+  if (c.startsWith('c#') && c.endsWith('m')) return 'c#m';
+  if (c.startsWith('d#') && c.endsWith('m')) return 'd#m';
+  if (c.startsWith('f#') && c.endsWith('m')) return 'f#m';
+  if (c.startsWith('g#') && c.endsWith('m')) return 'g#m';
+  if (c.startsWith('a#') && c.endsWith('m')) return 'a#m';
+  
+  if (c.endsWith('m')) return c;
+  return c;
+}
+
+function initFastCircleConfigScreen() {
+  // Key selector Setup
+  const keyPills = document.querySelectorAll('#fc-key-selector .key-pill');
+  keyPills.forEach(pill => {
+    const key = pill.getAttribute('data-key') || 'Do';
+    if (currentNotation === 'latin') {
+      pill.textContent = key;
+    } else {
+      pill.textContent = (ES_TO_EN_KEY as any)[key] || key;
+    }
+    
+    if (key === fcSelectedKey) {
+      pill.classList.add('active');
+    } else {
+      pill.classList.remove('active');
+    }
+  });
+
+  const freshKeyPills = document.querySelectorAll('#fc-key-selector .key-pill');
+  freshKeyPills.forEach(pill => {
+    // Reset listeners
+    const freshPill = pill.cloneNode(true) as HTMLElement;
+    pill.replaceWith(freshPill);
+    freshPill.addEventListener('click', () => {
+      document.querySelectorAll('#fc-key-selector .key-pill').forEach(p => (p as HTMLElement).classList.remove('active'));
+      freshPill.classList.add('active');
+      fcSelectedKey = freshPill.getAttribute('data-key') || 'Do';
+    });
+  });
+
+  // Diff selector setup
+  const diffCards = document.querySelectorAll('#fc-diff-container .fc-diff-card');
+  diffCards.forEach(card => {
+    const diff = card.getAttribute('data-diff') || 'normal';
+    if (diff === fcSelectedDiff) {
+      card.classList.add('selected');
+    } else {
+      card.classList.remove('selected');
+    }
+    
+    const freshCard = card.cloneNode(true) as HTMLElement;
+    card.replaceWith(freshCard);
+    freshCard.addEventListener('click', () => {
+      document.querySelectorAll('#fc-diff-container .fc-diff-card').forEach(c => (c as HTMLElement).classList.remove('selected'));
+      freshCard.classList.add('selected');
+      fcSelectedDiff = freshCard.getAttribute('data-diff') || 'normal';
+    });
+  });
+}
+
+function startFastCircleRound() {
+  fcRoundActive = true;
+  fcScore = 0;
+  fcStreak = 0;
+  fcCurrentTargetIndex = 0;
+  fcRoundResults = [];
+  fcConfirmTimeout = null;
+  fcChordStartTime = Date.now();
+  
+  fcCurrentRoundChords = VELOCITY_CIRCLE_SEQUENCES[fcSelectedKey] || VELOCITY_CIRCLE_SEQUENCES['Do'];
+  
+  const keyLabel = document.getElementById('fc-play-key-label');
+  if (keyLabel) {
+    if (currentNotation === 'latin') {
+      keyLabel.textContent = fcSelectedKey;
+    } else {
+      keyLabel.textContent = (ES_TO_EN_KEY as any)[fcSelectedKey] || fcSelectedKey;
+    }
+  }
+  
+  const diffLabel = document.getElementById('fc-play-diff-label');
+  if (diffLabel) {
+    diffLabel.textContent = fcSelectedDiff === 'normal' ? 'Normal' : fcSelectedDiff === 'rapido' ? 'Rápido' : 'Extremo';
+  }
+  
+  updateFcPlayScoreDisplay();
+  initFcSequenceStrip();
+  updateFcSequenceDisplay();
+  updateFcPlayCard();
+  
+  let duration = 90;
+  if (fcSelectedDiff === 'rapido') duration = 60;
+  else if (fcSelectedDiff === 'extremo') duration = 30;
+  
+  startFcTimer(duration);
+}
+
+function startFcTimer(duration: number) {
+  fcTimer = duration;
+  const totalDuration = duration;
+  const circumference = 188.4;
+  
+  const arcEl = document.getElementById('fc-timer-arc');
+  const textEl = document.getElementById('fc-timer-text');
+  
+  if (arcEl) arcEl.setAttribute('stroke-dashoffset', '0');
+  if (textEl) textEl.textContent = Math.ceil(fcTimer).toString();
+  
+  if (fcTimerInterval) clearInterval(fcTimerInterval);
+  
+  fcTimerInterval = setInterval(() => {
+    fcTimer -= 0.1;
+    if (fcTimer <= 0) {
+      fcTimer = 0;
+      clearInterval(fcTimerInterval);
+      fcTimerInterval = null;
+      if (arcEl) arcEl.setAttribute('stroke-dashoffset', circumference.toString());
+      if (textEl) textEl.textContent = '0';
+      endFastCircleRound(false);
+    } else {
+      if (arcEl) {
+        const offset = circumference * (1 - (fcTimer / totalDuration));
+        arcEl.setAttribute('stroke-dashoffset', offset.toString());
+      }
+      if (textEl) {
+        textEl.textContent = Math.ceil(fcTimer).toString();
+      }
+    }
+  }, 100);
+}
+
+function handleFastCircleInput(detectedChord: string) {
+  if (!fcRoundActive) return;
+
+  const targetChordData = fcCurrentRoundChords[fcCurrentTargetIndex];
+  if (!targetChordData) return;
+  const targetChordName = targetChordData.name;
+  
+  const normalizedTarget = normalizeChord(targetChordName);
+  const normalizedDetected = normalizeChord(detectedChord);
+  
+  const detectedDisplay = document.getElementById('fc-detected-chord-display');
+  const stateLabel = document.getElementById('fc-detector-state-label');
+  
+  if (detectedChord) {
+    if (detectedDisplay) {
+      detectedDisplay.textContent = translateChord(detectedChord, currentNotation);
+      detectedDisplay.style.color = 'var(--yellow)';
+    }
+    if (stateLabel) {
+      stateLabel.textContent = 'Acorde detectado';
+      stateLabel.style.color = 'var(--yellow)';
+    }
+  } else {
+    if (detectedDisplay) {
+      detectedDisplay.textContent = '---';
+      detectedDisplay.style.color = 'var(--muted)';
+    }
+    if (stateLabel) {
+      stateLabel.textContent = 'Escuchando...';
+      stateLabel.style.color = 'var(--muted)';
+    }
+  }
+
+  if (detectedChord && normalizedDetected === normalizedTarget) {
+    let tolerance = 40;
+    if (fcSelectedDiff === 'extremo') {
+      tolerance = 15;
+    }
+    
+    const centsOk = Math.abs(fcLastPitchCents) <= tolerance;
+    
+    if (centsOk) {
+      if (!fcConfirmTimeout) {
+        if (stateLabel) {
+          stateLabel.textContent = 'Estabilizando acorde...';
+          stateLabel.style.color = 'var(--green)';
+        }
+        fcConfirmTimeout = setTimeout(() => {
+          confirmChordSuccess();
+        }, 400);
+      }
+    } else {
+      if (fcConfirmTimeout) {
+        clearTimeout(fcConfirmTimeout);
+        fcConfirmTimeout = null;
+      }
+      if (stateLabel) {
+        stateLabel.textContent = `Afinación desviada (${fcLastPitchCents > 0 ? '+' : ''}${fcLastPitchCents}c)`;
+        stateLabel.style.color = 'var(--yellow)';
+      }
+    }
+  } else {
+    if (fcConfirmTimeout) {
+      clearTimeout(fcConfirmTimeout);
+      fcConfirmTimeout = null;
+    }
+    
+    if (detectedChord) {
+      const isDiatonic = fcCurrentRoundChords.some(chord => normalizeChord(chord.name) === normalizedDetected);
+      if (isDiatonic) {
+        if (fcStreak > 0) {
+          fcStreak = 0;
+          updateFcPlayCardStreak();
+        }
+      }
+    }
+  }
+}
+
+function confirmChordSuccess() {
+  fcConfirmTimeout = null;
+  
+  const flash = document.getElementById('fc-confirmation-flash');
+  if (flash) {
+    flash.style.opacity = '1';
+    setTimeout(() => {
+      flash.style.opacity = '0';
+    }, 200);
+  }
+  
+  const timeSpent = (Date.now() - fcChordStartTime) / 1000;
+  let points = 1000 - Math.floor(timeSpent * 10);
+  points = Math.max(0, points);
+  
+  if (fcStreak >= 3) {
+    points = Math.round(points * 1.5);
+  }
+  
+  fcScore += points;
+  
+  let speed: 'fast' | 'medium' | 'slow' = 'medium';
+  if (timeSpent <= 3) {
+    speed = 'fast';
+  } else if (timeSpent > 7) {
+    speed = 'slow';
+  }
+  
+  const targetChordData = fcCurrentRoundChords[fcCurrentTargetIndex];
+  fcRoundResults.push({
+    name: targetChordData.name,
+    time: timeSpent,
+    points: points,
+    speed: speed
+  });
+  
+  fcStreak++;
+  updateFcPlayScoreDisplay();
+  
+  fcCurrentTargetIndex++;
+  updateFcSequenceDisplay();
+  
+  if (fcCurrentTargetIndex >= 7) {
+    endFastCircleRound(true);
+  } else {
+    fcChordStartTime = Date.now();
+    updateFcPlayCard();
+  }
+}
+
+function endFastCircleRound(completedAll: boolean) {
+  fcRoundActive = false;
+  
+  if (fcTimerInterval) {
+    clearInterval(fcTimerInterval);
+    fcTimerInterval = null;
+  }
+  if (fcConfirmTimeout) {
+    clearTimeout(fcConfirmTimeout);
+    fcConfirmTimeout = null;
+  }
+  
+  if (completedAll) {
+    const bonus = Math.round(fcTimer * 50);
+    fcScore += bonus;
+  } else {
+    // Rellenar acordes pendientes
+    for (let i = fcCurrentTargetIndex; i < 7; i++) {
+      const chord = fcCurrentRoundChords[i];
+      fcRoundResults.push({
+        name: chord.name,
+        time: 0,
+        points: 0,
+        speed: 'slow'
+      });
+    }
+  }
+  
+  window.location.hash = '#fast-circle-results';
+}
+
+function initFcSequenceStrip() {
+  const strip = document.getElementById('fc-sequence-strip');
+  if (!strip) return;
+  strip.innerHTML = '';
+  
+  fcCurrentRoundChords.forEach(chord => {
+    const item = document.createElement('div');
+    item.className = 'fc-seq-item pending';
+    item.textContent = translateChord(chord.name, currentNotation);
+    strip.appendChild(item);
+  });
+}
+
+function updateFcSequenceDisplay() {
+  const progressText = document.getElementById('fc-progress-text');
+  if (progressText) {
+    progressText.textContent = `${fcCurrentTargetIndex} / 7 acordes`;
+  }
+  
+  const strip = document.getElementById('fc-sequence-strip');
+  if (!strip) return;
+  
+  const items = strip.children;
+  for (let i = 0; i < items.length; i++) {
+    const item = items[i] as HTMLElement;
+    item.className = 'fc-seq-item';
+    if (i < fcCurrentTargetIndex) {
+      item.classList.add('completed');
+    } else if (i === fcCurrentTargetIndex) {
+      item.classList.add('current');
+    } else {
+      item.classList.add('pending');
+    }
+  }
+}
+
+function updateFcPlayCard() {
+  const chordData = fcCurrentRoundChords[fcCurrentTargetIndex];
+  if (!chordData) return;
+  
+  const nameEl = document.getElementById('fc-chord-name');
+  const typeEl = document.getElementById('fc-chord-type-label');
+  const romanEl = document.getElementById('fc-roman-function-label');
+  const notesEl = document.getElementById('fc-notes-list');
+  
+  if (nameEl) {
+    nameEl.textContent = translateChord(chordData.name, currentNotation);
+  }
+  if (typeEl) {
+    typeEl.textContent = `Acorde ${chordData.type}`;
+  }
+  if (romanEl) {
+    romanEl.textContent = `${chordData.roman} — ${chordData.function}`;
+  }
+  if (notesEl) {
+    const notesList = chordData.notes.map((n: string) => translateNote(n, currentNotation));
+    notesEl.textContent = notesList.join(' · ');
+  }
+  
+  updateFcPlayCardStreak();
+}
+
+function updateFcPlayCardStreak() {
+  const badge = document.getElementById('fc-streak-badge');
+  if (badge) {
+    if (fcStreak >= 3) {
+      badge.style.display = 'inline-block';
+    } else {
+      badge.style.display = 'none';
+    }
+  }
+}
+
+function updateFcPlayScoreDisplay() {
+  const scoreEl = document.getElementById('fc-play-score');
+  if (scoreEl) {
+    scoreEl.textContent = fcScore.toString().padStart(6, '0');
+  }
+}
+
+function renderFastCircleResults() {
+  const scoreStr = fcScore.toString().padStart(6, '0');
+  const p1 = document.getElementById('fc-res-score-p1');
+  const p2 = document.getElementById('fc-res-score-p2');
+  const p3 = document.getElementById('fc-res-score-p3');
+  
+  if (p1) p1.textContent = scoreStr.slice(0, 2);
+  if (p2) p2.textContent = scoreStr.slice(2, 4);
+  if (p3) p3.textContent = scoreStr.slice(4, 6);
+  
+  const recordKey = `${fcSelectedKey}_${fcSelectedDiff}`;
+  let records: Record<string, { score: number, date: string }> = {};
+  try {
+    const stored = localStorage.getItem('chordCircle_records');
+    if (stored) records = JSON.parse(stored);
+  } catch (e) {
+    console.error('Error al cargar records:', e);
+  }
+  
+  const currentBest = records[recordKey]?.score || 0;
+  const isNewRecord = fcScore > currentBest;
+  
+  const recordBadge = document.getElementById('fc-record-badge');
+  if (recordBadge) {
+    if (isNewRecord) {
+      recordBadge.style.display = 'inline-block';
+      records[recordKey] = {
+        score: fcScore,
+        date: new Date().toISOString().split('T')[0]
+      };
+      localStorage.setItem('chordCircle_records', JSON.stringify(records));
+    } else {
+      recordBadge.style.display = 'none';
+    }
+  }
+  
+  const breakdownContainer = document.getElementById('fc-results-breakdown');
+  if (breakdownContainer) {
+    breakdownContainer.innerHTML = '';
+    
+    fcRoundResults.forEach(res => {
+      const row = document.createElement('div');
+      row.style.display = 'flex';
+      row.style.alignItems = 'center';
+      row.style.justifyContent = 'space-between';
+      row.style.padding = '8px 12px';
+      row.style.background = 'var(--bg)';
+      row.style.borderRadius = '6px';
+      row.style.border = '1px solid var(--faint)';
+      
+      const nameCol = document.createElement('span');
+      nameCol.className = 'mono';
+      nameCol.style.fontWeight = '700';
+      nameCol.style.fontSize = '14px';
+      nameCol.style.width = '80px';
+      nameCol.style.color = 'var(--white)';
+      nameCol.textContent = translateChord(res.name, currentNotation);
+      row.appendChild(nameCol);
+      
+      const barWrap = document.createElement('div');
+      barWrap.className = 'fc-speed-bar';
+      barWrap.style.flexGrow = '1';
+      barWrap.style.margin = '0 16px';
+      
+      const barFill = document.createElement('div');
+      barFill.className = `fc-speed-fill ${res.speed}`;
+      const percentage = res.time > 0 ? Math.min(100, (res.time / 10) * 100) : 0;
+      barFill.style.width = `${percentage}%`;
+      barWrap.appendChild(barFill);
+      row.appendChild(barWrap);
+      
+      const infoWrap = document.createElement('div');
+      infoWrap.style.display = 'flex';
+      infoWrap.style.gap = '16px';
+      infoWrap.style.alignItems = 'center';
+      infoWrap.style.minWidth = '140px';
+      infoWrap.style.justifyContent = 'flex-end';
+      
+      const timeSpan = document.createElement('span');
+      timeSpan.className = 'mono';
+      timeSpan.style.fontSize = '12px';
+      timeSpan.style.color = 'var(--muted)';
+      timeSpan.textContent = res.time > 0 ? `${res.time.toFixed(1)}s` : '--';
+      infoWrap.appendChild(timeSpan);
+      
+      const pointsSpan = document.createElement('span');
+      pointsSpan.className = 'mono';
+      pointsSpan.style.fontSize = '13px';
+      pointsSpan.style.fontWeight = '700';
+      pointsSpan.style.color = 'var(--green)';
+      pointsSpan.textContent = `+${res.points}`;
+      infoWrap.appendChild(pointsSpan);
+      
+      row.appendChild(infoWrap);
+      breakdownContainer.appendChild(row);
+    });
+  }
+  
+  let slowestChord = '';
+  let maxTime = -1;
+  fcRoundResults.forEach(res => {
+    if (res.time > maxTime) {
+      maxTime = res.time;
+      slowestChord = res.name;
+    }
+  });
+  
+  if (!slowestChord && fcRoundResults.length > 0) {
+    slowestChord = fcRoundResults[0].name;
+  }
+  
+  const weaknessText = document.getElementById('fc-weakness-text');
+  const practiceBtn = document.getElementById('fc-practice-weakness-btn');
+  const weaknessBox = document.getElementById('fc-weakness-box');
+  
+  if (slowestChord) {
+    if (weaknessBox) weaknessBox.style.display = 'flex';
+    const displayWeakness = translateChord(slowestChord, currentNotation);
+    if (weaknessText) {
+      weaknessText.textContent = `Tu punto débil: ${displayWeakness} — practica ese`;
+    }
+    if (practiceBtn) {
+      practiceBtn.textContent = `Practicar ${displayWeakness}`;
+      
+      const freshPracticeBtn = practiceBtn.cloneNode(true);
+      practiceBtn.replaceWith(freshPracticeBtn);
+      freshPracticeBtn.addEventListener('click', () => {
+        localStorage.setItem('practice_preselected_chord', slowestChord);
+        lastSelectedMode = 'practice';
+        localStorage.setItem('selectedMode', 'practice');
+        window.location.hash = '#play';
+      });
+    }
+  } else {
+    if (weaknessBox) weaknessBox.style.display = 'none';
+  }
+}
+
+// Binds de los botones de la pantalla de configuración
+const fcConfigBackBtn = document.getElementById('fc-config-back-btn');
+if (fcConfigBackBtn) {
+  fcConfigBackBtn.addEventListener('click', () => {
+    window.location.hash = '#mode';
+  });
+}
+
+const fcConfigStartBtn = document.getElementById('fc-config-start-btn');
+if (fcConfigStartBtn) {
+  fcConfigStartBtn.addEventListener('click', () => {
+    window.location.hash = '#fast-circle-play';
+  });
+}
+
+// Binds de los botones de la pantalla de resultados
+const fcResultsRetryBtn = document.getElementById('fc-results-retry-btn');
+if (fcResultsRetryBtn) {
+  fcResultsRetryBtn.addEventListener('click', () => {
+    window.location.hash = '#fast-circle-play';
+  });
+}
+
+const fcResultsChangeKeyBtn = document.getElementById('fc-results-change-key-btn');
+if (fcResultsChangeKeyBtn) {
+  fcResultsChangeKeyBtn.addEventListener('click', () => {
+    window.location.hash = '#fast-circle-config';
+  });
+}
+
+const fcResultsMenuBtn = document.getElementById('fc-results-menu-btn');
+if (fcResultsMenuBtn) {
+  fcResultsMenuBtn.addEventListener('click', () => {
+    window.location.hash = '#mode';
+  });
+}
+
+const fcPlayExitBtn = document.getElementById('fc-play-exit-btn');
+if (fcPlayExitBtn) {
+  fcPlayExitBtn.addEventListener('click', () => {
+    fcRoundActive = false;
+    if (fcTimerInterval) {
+      clearInterval(fcTimerInterval);
+      fcTimerInterval = null;
+    }
+    if (fcConfirmTimeout) {
+      clearTimeout(fcConfirmTimeout);
+      fcConfirmTimeout = null;
+    }
+    window.location.hash = '#fast-circle-config';
+  });
 }
 
 // ──────────────────────────────────────────

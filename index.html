@@ -338,7 +338,7 @@
 
       .mode-cards {
         display: grid;
-        grid-template-columns: repeat(3, 1fr);
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
         gap: 20px;
         width: 100%;
       }
@@ -974,6 +974,65 @@
         background: currentColor;
       }
 
+      /* Círculo Veloz custom styles */
+      .fc-diff-card {
+        transition: all 0.2s ease;
+        border: 1px solid var(--faint) !important;
+      }
+      .fc-diff-card:hover {
+        transform: translateY(-2px);
+        background: var(--bg3) !important;
+        border-color: var(--muted) !important;
+      }
+      .fc-diff-card.selected {
+        border-color: var(--yellow) !important;
+        background: var(--yellow-pale) !important;
+        box-shadow: 0 0 12px rgba(250, 204, 21, 0.2);
+      }
+      .fc-seq-item {
+        background: var(--bg2);
+        border: 1px solid var(--faint);
+        border-radius: 6px;
+        padding: 8px 12px;
+        font-size: 12px;
+        font-weight: 700;
+        color: var(--muted);
+        text-align: center;
+        position: relative;
+        flex: 1;
+        transition: all 0.2s ease;
+      }
+      .fc-seq-item.pending {
+        border-color: var(--faint);
+        color: var(--muted);
+      }
+      .fc-seq-item.current {
+        border-color: var(--yellow);
+        color: var(--yellow);
+        background: var(--yellow-pale);
+        box-shadow: 0 0 8px rgba(250, 204, 21, 0.2);
+      }
+      .fc-seq-item.completed {
+        border-color: var(--green);
+        color: var(--green);
+        background: var(--green-pale);
+      }
+      .fc-speed-bar {
+        height: 6px;
+        background: var(--faint);
+        border-radius: 3px;
+        width: 100px;
+        overflow: hidden;
+      }
+      .fc-speed-fill {
+        height: 100%;
+        width: 100%;
+        border-radius: 3px;
+      }
+      .fc-speed-fill.fast { background-color: var(--green); }
+      .fc-speed-fill.medium { background-color: var(--yellow); }
+      .fc-speed-fill.slow { background-color: #ef4444; }
+
       /* Responsive Media Queries */
       @media (max-width: 820px) {
         .circle-screen-layout {
@@ -1098,6 +1157,21 @@
               <span class="tag">Pausa Automática</span>
               <span class="tag">Cualquier Tempo</span>
               <span class="tag">Feedback</span>
+            </div>
+          </div>
+
+          <!-- Fast Circle Card -->
+          <div id="card-fast-circle" class="mode-card circle-mode" style="border-color: var(--yellow-dim);">
+            <div class="card-top">
+              <span class="card-title">Círculo Veloz</span>
+              <span class="badge" style="background: var(--yellow-pale); color: var(--yellow);">Competitivo</span>
+            </div>
+            <p class="card-desc">Toca los 7 acordes en el menor tiempo posible. ¡Rachas, multiplicadores, bonus de tiempo y récords locales!</p>
+            <div class="card-tags">
+              <span class="tag">7 Tonalidades</span>
+              <span class="tag">Dificultad</span>
+              <span class="tag">Límite de Tiempo</span>
+              <span class="tag">Récord</span>
             </div>
           </div>
         </div>
@@ -1283,6 +1357,7 @@
         </div>
 
         <div class="hints-row">
+          <div class="hint" id="practice-target-badge" style="display: none; color: var(--yellow) !important; font-weight: 700;">PRACTICANDO: <span id="practice-target-chord" style="color: var(--white);">-</span></div>
           <div class="hint"><span>Click</span> / Toca nota</div>
           <div class="hint">No dejes pasar burbujas a la <span>zona crítica</span></div>
           <div class="hint"><span>Micrófono</span> afinación real</div>
@@ -1324,6 +1399,169 @@
         <div class="go-buttons">
           <button id="go-retry-btn" class="btn">Reintentar</button>
           <button id="go-menu-btn" class="btn btn-ghost">Menú Principal</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ PANTALLA CÍRCULO VELOZ: CONFIGURACIÓN ═══ -->
+    <div id="fast-circle-config-screen" class="screen hidden">
+      <div class="difficulty-container" style="max-width: 650px;">
+        <div class="section-header">
+          <h2>Círculo Veloz</h2>
+          <p>Elige una tonalidad y una dificultad para iniciar la ronda rápida.</p>
+        </div>
+
+        <!-- Tonalidad Selector (Pills) -->
+        <div style="width: 100%; text-align: left; margin-bottom: 8px;">
+          <h3 style="font-size: 11px; text-transform: uppercase; color: var(--muted); margin-bottom: 12px; letter-spacing: 0.5px;">1. Selecciona la Tonalidad</h3>
+          <div class="key-selector-pills" id="fc-key-selector" style="grid-template-columns: repeat(7, 1fr); gap: 8px;">
+            <div class="key-pill active" data-key="Do">Do</div>
+            <div class="key-pill" data-key="Re">Re</div>
+            <div class="key-pill" data-key="Mi">Mi</div>
+            <div class="key-pill" data-key="Fa">Fa</div>
+            <div class="key-pill" data-key="Sol">Sol</div>
+            <div class="key-pill" data-key="La">La</div>
+            <div class="key-pill" data-key="Si">Si</div>
+          </div>
+        </div>
+
+        <!-- Dificultad Selector (Cards) -->
+        <div style="width: 100%; text-align: left;">
+          <h3 style="font-size: 11px; text-transform: uppercase; color: var(--muted); margin-bottom: 12px; letter-spacing: 0.5px;">2. Selecciona la Dificultad</h3>
+          <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; width: 100%;" id="fc-diff-container">
+            <!-- Normal Card -->
+            <div class="mode-card fc-diff-card selected" data-diff="normal" style="padding: 16px; cursor: pointer; text-align: left; gap: 8px;">
+              <div class="card-top">
+                <span class="card-title" style="font-size: 15px;">Normal</span>
+                <span class="badge" style="background: var(--yellow-pale); color: var(--yellow);">90s</span>
+              </div>
+              <p class="card-desc" style="font-size: 11px;">Tolerancia ±40 cents. Ideal para comenzar a familiarizarse.</p>
+            </div>
+            <!-- Rápido Card -->
+            <div class="mode-card fc-diff-card" data-diff="rapido" style="padding: 16px; cursor: pointer; text-align: left; gap: 8px;">
+              <div class="card-top">
+                <span class="card-title" style="font-size: 15px;">Rápido</span>
+                <span class="badge" style="background: var(--yellow-pale); color: var(--yellow);">60s</span>
+              </div>
+              <p class="card-desc" style="font-size: 11px;">Tolerancia ±40 cents. Puntos bonus por racha consecutiva.</p>
+            </div>
+            <!-- Extremo Card -->
+            <div class="mode-card fc-diff-card" data-diff="extremo" style="padding: 16px; cursor: pointer; text-align: left; gap: 8px;">
+              <div class="card-top">
+                <span class="card-title" style="font-size: 15px;">Extremo</span>
+                <span class="badge" style="background: var(--yellow-pale); color: var(--yellow);">30s</span>
+              </div>
+              <p class="card-desc" style="font-size: 11px;">Tolerancia estricta ±15 cents. Para expertos absolutos.</p>
+            </div>
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 16px; width: 100%; margin-top: 16px;">
+          <button id="fc-config-back-btn" class="btn btn-ghost" style="flex: 1;">Atrás</button>
+          <button id="fc-config-start-btn" class="btn" style="flex: 2; background: var(--yellow); color: var(--bg); border: none;">Comenzar ronda</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ PANTALLA CÍRCULO VELOZ: RONDA ACTIVA ═══ -->
+    <div id="fast-circle-play-screen" class="screen hidden" style="justify-content: space-between; padding: 20px 24px;">
+      <!-- Zona 1: Topbar -->
+      <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; height: 80px; flex-shrink: 0;">
+        <div style="display: flex; flex-direction: column; gap: 4px;">
+          <div style="font-size: 20px; font-weight: 800; display: flex; align-items: center; gap: 8px;">
+            <span id="fc-play-key-label" class="mono">Do</span>
+            <span style="font-size: 12px; color: var(--muted); font-weight: 400;">Tonalidad</span>
+          </div>
+          <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--yellow); font-weight: 700;" id="fc-play-diff-label">Rápido</div>
+        </div>
+
+        <div style="position: relative; width: 70px; height: 70px; display: flex; align-items: center; justify-content: center;">
+          <svg width="70" height="70" viewBox="0 0 70 70" style="transform: rotate(-90deg);">
+            <circle cx="35" cy="35" r="30" fill="none" stroke="var(--faint)" stroke-width="5" />
+            <circle id="fc-timer-arc" cx="35" cy="35" r="30" fill="none" stroke="var(--yellow)" stroke-width="5"
+                    stroke-dasharray="188.4" stroke-dashoffset="0" stroke-linecap="round" style="transition: stroke-dashoffset 0.1s linear;" />
+          </svg>
+          <div id="fc-timer-text" class="mono" style="position: absolute; font-size: 18px; font-weight: 800; color: var(--yellow);">60</div>
+        </div>
+
+        <div style="text-align: right; display: flex; flex-direction: column; gap: 4px;">
+          <span style="font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px;">Puntaje</span>
+          <span id="fc-play-score" class="mono" style="font-size: 24px; font-weight: 800; color: var(--white);">000000</span>
+        </div>
+      </div>
+
+      <!-- Zona 2: Acorde Actual -->
+      <div style="flex-grow: 1; display: flex; align-items: center; justify-content: center; width: 100%; margin: 16px 0; min-height: 220px;">
+        <div id="fc-chord-card" class="mode-card" style="width: 100%; max-width: 550px; padding: 32px; border-color: var(--yellow) !important; background: var(--yellow-pale) !important; text-align: center; justify-content: center; align-items: center; position: relative; box-shadow: 0 0 16px rgba(250, 204, 21, 0.1);">
+          <div id="fc-streak-badge" class="badge" style="position: absolute; top: 16px; right: 16px; background: var(--yellow-pale); color: var(--yellow); border: 1px solid var(--yellow); font-size: 10px; padding: 4px 8px; display: none;">Racha ×1.5</div>
+          <span id="fc-roman-function-label" style="font-size: 11px; text-transform: uppercase; color: var(--muted); letter-spacing: 1px; font-weight: 700;">I — Tónica</span>
+          <h2 id="fc-chord-name" style="font-size: 64px; font-weight: 800; color: var(--yellow); margin: 12px 0; line-height: 1;">Do</h2>
+          <span id="fc-chord-type-label" style="font-size: 12px; color: var(--muted); font-weight: 600; margin-bottom: 12px; display: block;">Acorde Mayor</span>
+          <div id="fc-notes-list" class="mono" style="font-size: 16px; color: var(--white); background: var(--bg); padding: 8px 16px; border-radius: 6px; border: 1px solid var(--faint);">Do · Mi · Sol</div>
+        </div>
+      </div>
+
+      <!-- Zona 3: Progreso -->
+      <div style="width: 100%; display: flex; flex-direction: column; gap: 12px; margin-bottom: 16px; flex-shrink: 0;">
+        <div style="display: flex; justify-content: space-between; font-size: 12px; font-weight: 600; padding: 0 4px;">
+          <span style="color: var(--muted);">Progreso de la secuencia</span>
+          <span id="fc-progress-text" class="mono" style="color: var(--yellow); font-weight: 800;">0 / 7 acordes</span>
+        </div>
+        <div class="horizontal-chord-sequence" id="fc-sequence-strip" style="width: 100%;"></div>
+      </div>
+
+      <!-- Zona 4: Afinador -->
+      <div style="width: 100%; flex-shrink: 0; display: flex; flex-direction: column; gap: 8px; background: var(--bg2); border: 1px solid var(--faint); border-radius: 12px; padding: 12px 16px;">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <span class="tuner-bar-label" style="font-size: 9px; font-weight: 700; color: var(--muted); letter-spacing: 0.5px;">Detector de Acordes</span>
+          <span id="fc-detector-state-label" class="mono" style="font-size: 11px; font-weight: 700; color: var(--muted);">Buscando señal...</span>
+        </div>
+        <div style="width: 100%; height: 38px; background: var(--bg); border-radius: 8px; display: flex; align-items: center; justify-content: center; position: relative; border: 1px solid var(--faint); overflow: hidden;">
+          <div id="fc-detected-chord-display" class="mono" style="font-size: 18px; font-weight: 800; color: var(--muted); z-index: 2;">---</div>
+          <div id="fc-confirmation-flash" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(34, 197, 94, 0.2); opacity: 0; transition: opacity 0.2s ease; pointer-events: none; z-index: 1;"></div>
+        </div>
+      </div>
+
+      <div style="width: 100%; display: flex; justify-content: space-between; align-items: center; margin-top: 12px; flex-shrink: 0;">
+        <button id="fc-play-exit-btn" class="btn btn-ghost" style="padding: 6px 12px; font-size: 11px;">◀ Abandonar</button>
+        <span style="font-size: 9px; color: var(--muted); text-transform: uppercase;">Micrófono activo</span>
+      </div>
+    </div>
+
+    <!-- ═══ PANTALLA CÍRCULO VELOZ: RESULTADOS ═══ -->
+    <div id="fast-circle-results-screen" class="screen hidden">
+      <div class="game-over-container" style="max-width: 600px;">
+        <div class="game-over-header">
+          <span class="go-label">Ronda Finalizada</span>
+          <div class="go-score-large mono" style="font-size: 56px; font-weight: 800; display: flex; gap: 2px; justify-content: center; letter-spacing: -2px;">
+            <span style="color: var(--purple);" id="fc-res-score-p1">00</span>
+            <span style="color: var(--white);" id="fc-res-score-p2">00</span>
+            <span style="color: var(--green);" id="fc-res-score-p3">00</span>
+          </div>
+          <div id="fc-record-badge" class="record-badge" style="background: var(--yellow-pale); border: 1px solid var(--yellow-dim); color: var(--yellow); display: none;">🏆 ¡NUEVO RÉCORD PERSONAL!</div>
+        </div>
+
+        <!-- Punto Débil -->
+        <div id="fc-weakness-box" style="width: 100%; background: var(--bg2); border: 1px solid var(--faint); border-radius: 8px; padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; text-align: left;">
+          <div>
+            <div style="font-size: 9px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; font-weight: 700;">Recomendación de práctica</div>
+            <div style="font-size: 13px; font-weight: 600; color: var(--white); margin-top: 2px;" id="fc-weakness-text">Tu punto débil: Sol maj — practica ese</div>
+          </div>
+          <button id="fc-practice-weakness-btn" class="btn btn-ghost" style="padding: 6px 12px; font-size: 11px; border-color: var(--yellow); color: var(--yellow);">Practicar Sol maj</button>
+        </div>
+
+        <!-- Desglose de acordes -->
+        <div style="width: 100%; max-height: 220px; overflow-y: auto; background: var(--bg2); border: 1px solid var(--faint); border-radius: 8px; padding: 12px; display: flex; flex-direction: column; gap: 8px;" id="fc-results-breakdown">
+          <!-- Populated dynamically -->
+        </div>
+
+        <!-- Botones de Acción -->
+        <div style="display: flex; flex-direction: column; gap: 12px; width: 100%;">
+          <div class="go-buttons">
+            <button id="fc-results-retry-btn" class="btn" style="background: var(--yellow); color: var(--bg); border: none; font-weight: 800; cursor: pointer;">Otra ronda</button>
+            <button id="fc-results-change-key-btn" class="btn btn-ghost" style="cursor: pointer;">Cambiar tonalidad</button>
+          </div>
+          <button id="fc-results-menu-btn" class="btn btn-ghost" style="width: 100%; cursor: pointer;">Menú Principal</button>
         </div>
       </div>
     </div>

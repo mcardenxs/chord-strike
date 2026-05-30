@@ -585,7 +585,12 @@ export default class GameScene extends Phaser.Scene {
     const diff = this.game.registry.get('difficulty') || 'beginner'
 
     if (this.gameMode === 'practice') {
-      spawnChord = Phaser.Math.Between(1, 100) <= 40 // 40% en práctica
+      const preselected = localStorage.getItem('practice_preselected_chord')
+      if (preselected) {
+        spawnChord = Phaser.Math.Between(1, 100) <= 80 // 80% chords when practicing a specific chord
+      } else {
+        spawnChord = Phaser.Math.Between(1, 100) <= 40 // 40% normally
+      }
     } else {
       if (diff === 'beginner') {
         spawnChord = false
@@ -651,7 +656,19 @@ export default class GameScene extends Phaser.Scene {
     if (spawnChord) {
       // Filtrar acordes por dificultad
       let chordPool = CHORD_TYPES
-      if (diff === 'intermediate' && this.gameMode === 'arcade') {
+      const preselected = localStorage.getItem('practice_preselected_chord')
+      if (this.gameMode === 'practice' && preselected) {
+        const preSelLower = preselected.toLowerCase().replace(/\s+/g, '')
+        chordPool = CHORD_TYPES.filter(c => {
+          const latinName = c.name.toLowerCase().replace(/\s+/g, '')
+          const amerName = this.translateChordName(c.name, 'american').toLowerCase().replace(/\s+/g, '')
+          return latinName === preSelLower || amerName === preSelLower
+        })
+        if (chordPool.length === 0) {
+          chordPool = CHORD_TYPES.filter(c => c.name.toLowerCase().includes(preSelLower) || 
+                                             this.translateChordName(c.name, 'american').toLowerCase().includes(preSelLower))
+        }
+      } else if (diff === 'intermediate' && this.gameMode === 'arcade') {
         // Solo mayores y menores
         chordPool = CHORD_TYPES.filter(c => c.name.endsWith('m') ? c.name.match(/^[A-Za-z#]+m$/) : c.name.match(/^[A-Za-z#]+$/))
       } else if (diff === 'advanced' && this.gameMode === 'arcade') {
