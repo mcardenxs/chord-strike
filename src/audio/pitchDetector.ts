@@ -172,6 +172,9 @@ export class PitchDetectorService {
 
       // 2. Crear contexto de audio
       this.audioContext = new AudioContext()
+      if (this.audioContext.state === 'suspended') {
+        await this.audioContext.resume()
+      }
       const sampleRate = this.audioContext.sampleRate
 
       // 3. Crear analizador FFT
@@ -254,6 +257,14 @@ export class PitchDetectorService {
     } catch (err) {
       console.warn('🎤 No se pudo acceder al micrófono:', err)
       this.updateMicStatus(false)
+    }
+  }
+
+  /** Reanuda el contexto de audio si está suspendido */
+  async resume(): Promise<void> {
+    if (this.audioContext && this.audioContext.state === 'suspended') {
+      await this.audioContext.resume()
+      console.log('🎤 PitchDetector AudioContext reanudado con éxito')
     }
   }
 

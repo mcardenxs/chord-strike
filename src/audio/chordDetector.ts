@@ -170,6 +170,9 @@ export class ChordDetectorService {
       })
 
       this.audioContext = new AudioContext()
+      if (this.audioContext.state === 'suspended') {
+        await this.audioContext.resume()
+      }
       const sampleRate = this.audioContext.sampleRate
 
       this.analyserNode = this.audioContext.createAnalyser()
@@ -307,6 +310,14 @@ export class ChordDetectorService {
       console.log('🎵 ChordDetectorService (Template Matching) iniciado con éxito.')
     } catch (err) {
       console.warn('🎵 No se pudo iniciar ChordDetectorService:', err)
+    }
+  }
+
+  /** Reanuda el contexto de audio si está suspendido */
+  async resume(): Promise<void> {
+    if (this.audioContext && this.audioContext.state === 'suspended') {
+      await this.audioContext.resume()
+      console.log('🎵 ChordDetector AudioContext reanudado con éxito')
     }
   }
 

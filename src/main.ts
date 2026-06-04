@@ -525,7 +525,7 @@ const pitchDetector = new PitchDetectorService()
 const chordDetector = new ChordDetectorService()
 
 // Reanudar el AudioContext de Phaser ante cualquier interacción del usuario para que se escuche el metrónomo
-function resumePhaserAudio() {
+async function resumeAllAudio() {
   if (game && game.sound && (game.sound as any).context) {
     const ctx = (game.sound as any).context as AudioContext
     if (ctx && ctx.state === 'suspended') {
@@ -536,9 +536,15 @@ function resumePhaserAudio() {
       })
     }
   }
+  if (pitchDetector.running) {
+    await pitchDetector.resume()
+  }
+  if (chordDetector.running) {
+    await chordDetector.resume()
+  }
 }
-window.addEventListener('click', resumePhaserAudio)
-window.addEventListener('touchstart', resumePhaserAudio)
+window.addEventListener('click', resumeAllAudio)
+window.addEventListener('touchstart', resumeAllAudio)
 
 window.addEventListener('click', async () => {
   const micStatus = document.getElementById('mic-status')
@@ -563,6 +569,7 @@ window.addEventListener('click', async () => {
       const idealHz = 440 * Math.pow(2, (midiNote - 69) / 12)
       const centsDeviation = Math.round(1200 * Math.log2(result.frequency / idealHz))
       fcLastPitchCents = centsDeviation
+      fcLastPitchTime = Date.now()
       
       if (tunerBarCents) {
         const sign = centsDeviation >= 0 ? '+' : ''
@@ -606,6 +613,7 @@ window.addEventListener('click', async () => {
       }
     })
   }
+  await resumeAllAudio()
 }, { once: true })
 
 // ──────────────────────────────────────────
@@ -812,7 +820,7 @@ function handleChordCircleInput(detectedChord: string) {
   const chords = generateDiatonicChords(chordCircleKey, currentNotation)
   const targetChord = chords[targetChordIndex]
   
-  if (detectedChord.toLowerCase() === targetChord.toLowerCase()) {
+  if (normalizeChord(detectedChord) === normalizeChord(targetChord)) {
     // Acertó el acorde actual
     targetChordIndex++
     
@@ -941,6 +949,7 @@ let fcRoundActive = false;
 let fcRoundResults: { name: string, time: number, points: number, speed: 'fast' | 'medium' | 'slow' }[] = [];
 let fcConfirmTimeout: any = null;
 let fcLastPitchCents = 0;
+let fcLastPitchTime = 0;
 
 const VELOCITY_CIRCLE_SEQUENCES: Record<string, { name: string, type: string, roman: string, function: string, notes: string[] }[]> = {
   Do: [
@@ -1271,7 +1280,8 @@ function handleFastCircleInput(detectedChord: string) {
       tolerance = 15;
     }
     
-    const centsOk = Math.abs(fcLastPitchCents) <= tolerance;
+    const pitchAge = Date.now() - fcLastPitchTime;
+    const centsOk = (pitchAge > 1500) || (Math.abs(fcLastPitchCents) <= tolerance);
     
     if (centsOk) {
       if (!fcConfirmTimeout) {
