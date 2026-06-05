@@ -208,6 +208,18 @@ function handleRouting() {
     localStorage.removeItem('practice_preselected_chord')
   }
 
+  if (hash !== '#fast-circle-play') {
+    fcRoundActive = false;
+    if (fcTimerInterval) {
+      clearInterval(fcTimerInterval);
+      fcTimerInterval = null;
+    }
+    if (fcConfirmTimeout) {
+      clearTimeout(fcConfirmTimeout);
+      fcConfirmTimeout = null;
+    }
+  }
+
   let screenId = 'start-screen'
   if (hash === '#start') {
     screenId = 'start-screen'
@@ -465,6 +477,26 @@ if (gameNotationToggle) {
       renderCircleChords(chords)
       renderSequenceStrip(chords)
       updateCircleVisuals()
+    }
+
+    // Re-renderizar Círculo Veloz si está activo
+    const hash = window.location.hash
+    if (hash === '#fast-circle-config') {
+      initFastCircleConfigScreen()
+    } else if (hash === '#fast-circle-play') {
+      const keyLabel = document.getElementById('fc-play-key-label')
+      if (keyLabel) {
+        if (currentNotation === 'latin') {
+          keyLabel.textContent = fcSelectedKey
+        } else {
+          keyLabel.textContent = ES_TO_EN_KEY[fcSelectedKey] || fcSelectedKey
+        }
+      }
+      initFcSequenceStrip()
+      updateFcSequenceDisplay()
+      updateFcPlayCard()
+    } else if (hash === '#fast-circle-results') {
+      renderFastCircleResults()
     }
   })
 }
@@ -950,6 +982,7 @@ let fcRoundResults: { name: string, time: number, points: number, speed: 'fast' 
 let fcConfirmTimeout: any = null;
 let fcLastPitchCents = 0;
 let fcLastPitchTime = 0;
+let fcSlowestChord = '';
 
 const VELOCITY_CIRCLE_SEQUENCES: Record<string, { name: string, type: string, roman: string, function: string, notes: string[] }[]> = {
   Do: [
@@ -1088,6 +1121,28 @@ function normalizeChord(chord: string): string {
   c = c.replace('ab', 'g#');
   c = c.replace('bb', 'a#');
   
+  const rootsMap = [
+    { en: 'c#', es: 'do#' },
+    { en: 'd#', es: 're#' },
+    { en: 'f#', es: 'fa#' },
+    { en: 'g#', es: 'sol#' },
+    { en: 'a#', es: 'la#' },
+    { en: 'c', es: 'do' },
+    { en: 'd', es: 're' },
+    { en: 'e', es: 'mi' },
+    { en: 'f', es: 'fa' },
+    { en: 'g', es: 'sol' },
+    { en: 'a', es: 'la' },
+    { en: 'b', es: 'si' }
+  ];
+
+  for (const root of rootsMap) {
+    if (c.startsWith(root.en)) {
+      c = root.es + c.slice(root.en.length);
+      break;
+    }
+  }
+
   if (c.includes('dim') || c.includes('disminuido') || c.includes('°')) {
     let root = c.replace('diminished', '').replace('disminuido', '').replace('dim', '').replace('°', '');
     return root + 'dim';
@@ -1110,13 +1165,17 @@ function normalizeChord(chord: string): string {
   if (c.startsWith('sol#') && c.endsWith('m')) return 'sol#m';
   if (c.startsWith('la#') && c.endsWith('m')) return 'la#m';
   
-  if (c.startsWith('c#') && c.endsWith('m')) return 'c#m';
-  if (c.startsWith('d#') && c.endsWith('m')) return 'd#m';
-  if (c.startsWith('f#') && c.endsWith('m')) return 'f#m';
-  if (c.startsWith('g#') && c.endsWith('m')) return 'g#m';
-  if (c.startsWith('a#') && c.endsWith('m')) return 'a#m';
-  
-  if (c.endsWith('m')) return c;
+  if (c.endsWith('m')) {
+    const root = c.slice(0, -1);
+    if (root === 'do') return 'dom';
+    if (root === 're') return 'rem';
+    if (root === 'mi') return 'mim';
+    if (root === 'fa') return 'fam';
+    if (root === 'sol') return 'solm';
+    if (root === 'la') return 'lam';
+    if (root === 'si') return 'sim';
+    return c;
+  }
   return c;
 }
 
@@ -1128,7 +1187,7 @@ function initFastCircleConfigScreen() {
     if (currentNotation === 'latin') {
       pill.textContent = key;
     } else {
-      pill.textContent = (ES_TO_EN_KEY as any)[key] || key;
+      pill.textContent = ES_TO_EN_KEY[key] || key;
     }
     
     if (key === fcSelectedKey) {
@@ -1136,18 +1195,6 @@ function initFastCircleConfigScreen() {
     } else {
       pill.classList.remove('active');
     }
-  });
-
-  const freshKeyPills = document.querySelectorAll('#fc-key-selector .key-pill');
-  freshKeyPills.forEach(pill => {
-    // Reset listeners
-    const freshPill = pill.cloneNode(true) as HTMLElement;
-    pill.replaceWith(freshPill);
-    freshPill.addEventListener('click', () => {
-      document.querySelectorAll('#fc-key-selector .key-pill').forEach(p => (p as HTMLElement).classList.remove('active'));
-      freshPill.classList.add('active');
-      fcSelectedKey = freshPill.getAttribute('data-key') || 'Do';
-    });
   });
 
   // Diff selector setup
@@ -1159,14 +1206,6 @@ function initFastCircleConfigScreen() {
     } else {
       card.classList.remove('selected');
     }
-    
-    const freshCard = card.cloneNode(true) as HTMLElement;
-    card.replaceWith(freshCard);
-    freshCard.addEventListener('click', () => {
-      document.querySelectorAll('#fc-diff-container .fc-diff-card').forEach(c => (c as HTMLElement).classList.remove('selected'));
-      freshCard.classList.add('selected');
-      fcSelectedDiff = freshCard.getAttribute('data-diff') || 'normal';
-    });
   });
 }
 
@@ -1605,18 +1644,11 @@ function renderFastCircleResults() {
     }
     if (practiceBtn) {
       practiceBtn.textContent = `Practicar ${displayWeakness}`;
-      
-      const freshPracticeBtn = practiceBtn.cloneNode(true);
-      practiceBtn.replaceWith(freshPracticeBtn);
-      freshPracticeBtn.addEventListener('click', () => {
-        localStorage.setItem('practice_preselected_chord', slowestChord);
-        lastSelectedMode = 'practice';
-        localStorage.setItem('selectedMode', 'practice');
-        window.location.hash = '#play';
-      });
     }
+    fcSlowestChord = slowestChord;
   } else {
     if (weaknessBox) weaknessBox.style.display = 'none';
+    fcSlowestChord = '';
   }
 }
 
@@ -1672,6 +1704,35 @@ if (fcPlayExitBtn) {
     window.location.hash = '#fast-circle-config';
   });
 }
+
+// Binds estáticos de Círculo Veloz para evitar clonación repetida de nodos DOM
+const fcPracticeWeaknessBtn = document.getElementById('fc-practice-weakness-btn');
+if (fcPracticeWeaknessBtn) {
+  fcPracticeWeaknessBtn.addEventListener('click', () => {
+    if (fcSlowestChord) {
+      localStorage.setItem('practice_preselected_chord', fcSlowestChord);
+      lastSelectedMode = 'practice';
+      localStorage.setItem('selectedMode', 'practice');
+      window.location.hash = '#play';
+    }
+  });
+}
+
+document.querySelectorAll('#fc-key-selector .key-pill').forEach(pill => {
+  pill.addEventListener('click', () => {
+    document.querySelectorAll('#fc-key-selector .key-pill').forEach(p => (p as HTMLElement).classList.remove('active'));
+    (pill as HTMLElement).classList.add('active');
+    fcSelectedKey = (pill as HTMLElement).getAttribute('data-key') || 'Do';
+  });
+});
+
+document.querySelectorAll('#fc-diff-container .fc-diff-card').forEach(card => {
+  card.addEventListener('click', () => {
+    document.querySelectorAll('#fc-diff-container .fc-diff-card').forEach(c => (c as HTMLElement).classList.remove('selected'));
+    (card as HTMLElement).classList.add('selected');
+    fcSelectedDiff = (card as HTMLElement).getAttribute('data-diff') || 'normal';
+  });
+});
 
 // ──────────────────────────────────────────
 // Limpieza al cerrar
