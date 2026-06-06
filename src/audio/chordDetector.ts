@@ -310,6 +310,12 @@ export class ChordDetectorService {
       console.log('🎵 ChordDetectorService (Template Matching) iniciado con éxito.')
     } catch (err) {
       console.warn('🎵 No se pudo iniciar ChordDetectorService:', err)
+      const badge = document.getElementById('mic-status')
+      if (badge) {
+        badge.classList.remove('active')
+        badge.classList.add('denied')
+        badge.innerHTML = '<span class="dot"></span>MIC ERR — SIN ACCESO'
+      }
     }
   }
 

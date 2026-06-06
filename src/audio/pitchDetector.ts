@@ -198,7 +198,7 @@ export class PitchDetectorService {
       this.lastEmitTime = 0
 
       this.isRunning = true
-      this.updateMicStatus(true)
+      this.updateMicStatus('active')
 
       // 6. Iniciar loop de detección
       const detect = () => {
@@ -256,7 +256,7 @@ export class PitchDetectorService {
 
     } catch (err) {
       console.warn('🎤 No se pudo acceder al micrófono:', err)
-      this.updateMicStatus(false)
+      this.updateMicStatus('denied')
     }
   }
 
@@ -294,19 +294,22 @@ export class PitchDetectorService {
     this.lastEmittedNote = null
     this.lastEmitTime = 0
 
-    this.updateMicStatus(false)
+    this.updateMicStatus('standby')
     console.log('🎤 PitchDetector detenido')
   }
 
   /** Actualiza el badge visual de estado del micrófono en el HTML */
-  private updateMicStatus(active: boolean): void {
+  private updateMicStatus(status: 'active' | 'standby' | 'denied'): void {
     const badge = document.getElementById('mic-status')
     if (!badge) return
-    if (active) {
+    badge.classList.remove('active', 'denied')
+    if (status === 'active') {
       badge.classList.add('active')
       badge.innerHTML = '<span class="dot"></span>MIC ACTIVE — PITCH DETECT ON'
+    } else if (status === 'denied') {
+      badge.classList.add('denied')
+      badge.innerHTML = '<span class="dot"></span>MIC ERR — SIN ACCESO'
     } else {
-      badge.classList.remove('active')
       badge.innerHTML = '<span class="dot"></span>MIC STANDBY'
     }
   }
