@@ -160,6 +160,15 @@
         box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
       }
 
+      .btn-yellow {
+        background: var(--yellow);
+        color: var(--bg);
+      }
+      .btn-yellow:hover {
+        background: var(--yellow-dim);
+        box-shadow: 0 4px 12px rgba(250, 204, 21, 0.3);
+      }
+
       /* Badges y Tags */
       .badge {
         font-size: 9px;
@@ -1482,7 +1491,7 @@
 
         <div style="display: flex; gap: 16px; width: 100%; margin-top: 16px;">
           <button id="fc-config-back-btn" class="btn btn-ghost" style="flex: 1;">Atrás</button>
-          <button id="fc-config-start-btn" class="btn" style="flex: 2; background: var(--yellow); color: var(--bg); border: none;">Comenzar ronda</button>
+          <button id="fc-config-start-btn" class="btn btn-yellow" style="flex: 2;">Comenzar ronda</button>
         </div>
       </div>
     </div>
@@ -1582,7 +1591,7 @@
         <!-- Botones de Acción -->
         <div style="display: flex; flex-direction: column; gap: 12px; width: 100%;">
           <div class="go-buttons">
-            <button id="fc-results-retry-btn" class="btn" style="background: var(--yellow); color: var(--bg); border: none; font-weight: 800; cursor: pointer;">Otra ronda</button>
+            <button id="fc-results-retry-btn" class="btn btn-yellow" style="font-weight: 800; cursor: pointer;">Otra ronda</button>
             <button id="fc-results-change-key-btn" class="btn btn-ghost" style="cursor: pointer;">Cambiar tonalidad</button>
           </div>
           <button id="fc-results-menu-btn" class="btn btn-ghost" style="width: 100%; cursor: pointer;">Menú Principal</button>
