@@ -1368,7 +1368,7 @@ function confirmChordSuccess() {
     flash.style.opacity = '1';
     setTimeout(() => {
       flash.style.opacity = '0';
-    }, 200);
+    }, 250);
   }
   
   const timeSpent = (Date.now() - fcChordStartTime) / 1000;
