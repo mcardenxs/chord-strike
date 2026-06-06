@@ -11,7 +11,7 @@
 import Phaser from 'phaser'
 import GameScene from './scenes/GameScene'
 import { PitchDetectorService } from './audio/pitchDetector'
-import { ChordDetectorService, translateChordName } from './audio/chordDetector'
+import { ChordDetectorService } from './audio/chordDetector'
 
 // ──────────────────────────────────────────
 // Configuración de Phaser
